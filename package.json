@@ -1,0 +1,19 @@
+{
+  "name": "mum",
+  "version": "0.1.0",
+  "description": "Modern Update Manager for any project using git repositories.",
+  "main": "mum.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mwhite05/mum.git"
+  },
+  "author": "Michael White",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mwhite05/mum/issues"
+  },
+  "homepage": "https://github.com/mwhite05/mum"
+}

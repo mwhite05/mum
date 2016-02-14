@@ -160,7 +160,7 @@ function _install(r) {
 
     var installInfo = {
         url: r.url,
-        source: o.src,
+        sources: path.dirname(o.src),
         destination: fs.realpathSync(r.dir)
     };
 

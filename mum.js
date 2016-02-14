@@ -184,6 +184,9 @@ function _cloneRepository(r, mode) {
             clog('Could not find or create the target installation src directory: ' + srcDir);
             process.exit(1);
         }
+    } else if(mode.substring(0, 11) == 'dependency-') {
+        // Looks like we already have this software package cloned, skip
+        return;
     }
 
     srcDir = fs.realpathSync(srcDir);
@@ -253,7 +256,7 @@ function _cloneRepository(r, mode) {
             src: r.src, // pass this down for all levels of depth - we store repositories for all levels at the same flat level
             dir: depDir
         };
-        _cloneRepository(o);
+        _cloneRepository(o, 'dependency-'+mode);
     });
 
     overlayList.reverse(); // Go backwards - the custom thing we are installing may have overrides for things defined in the dependencies

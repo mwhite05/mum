@@ -238,6 +238,10 @@ module.exports = {
             '.placeholder'
         ];
 
+        if(self.isArray(options.ignore)) {
+            ignore = options.ignore;
+        }
+
         files.forEach(function (file) {
             if (ignore.indexOf(file) > -1) {
                 return;
@@ -263,6 +267,26 @@ module.exports = {
         });
 
         return listing;
+    },
+
+    wipeDirectory: function(path) {
+        var self = this;
+        var paths = this.getDirectoryListing(path, {
+            ignore: [] // don't ignore any files or directories - we have to delete everything
+        });
+
+        paths.reverse();
+
+        paths.forEach(function(info) {
+            if(! fs.existsSync(info.path)) {
+                return; // Skip this file/directory - it no longer exists
+            }
+            if (info.type == 'file') {
+                fs.unlinkSync(info.path);
+            } else if (info.type == 'directory') {
+                fs.rmdirSync(info.path);
+            }
+        });
     },
 
     capitalizeWords: function (string) {

@@ -150,25 +150,38 @@ function install(url, dir) {
 }
 
 function _install(r) {
-    _cloneRepository(r, 'install');
+    var o = _cloneRepository(r, 'install');
 
+    // Save a configuration file containing information about this installation required to run updates later.
+    var installConfigFile = path.dirname(path.dirname(o.src))+'/mumi.json'; // mum installation file
+    if(fs.existsSync(installConfigFile)) {
+        fs.unlinkSync(installConfigFile);
+    }
+
+    var installInfo = {
+        url: r.url,
+        source: o.src,
+        destination: fs.realpathSync(r.dir)
+    };
+
+    fs.writeFileSync(installConfigFile, JSON.stringify(installInfo));
 }
 
 function _cloneRepository(r, mode) {
     var overlayList = [];
 
-    clog('raw r.dir: ' + r.dir);
-
     var srcDir = r.src+'/../.mum/'+ r.name;
 
-    if(fs.existsSync(srcDir)) {
-        // Wipe it clean for installs
-        if(mode == 'install') {
-            clog('todo - wipe the directory: '+srcDir);
+    if(mode == 'install') {
+        clog('srcDir: '+srcDir, fs.realpathSync(path.dirname(srcDir)));
+        lib.wipeDirectory(fs.realpathSync(path.dirname(srcDir)));
+    }
+
+    if(! fs.existsSync(srcDir)) {
+        if(! mkdirp.sync(srcDir)) {
+            clog('Could not find or create the target installation src directory: ' + srcDir);
+            process.exit(1);
         }
-    } else if(! mkdirp.sync(srcDir)) {
-        clog('Could not find or create the target installation src directory: '+srcDir);
-        process.exit(1);
     }
 
     srcDir = fs.realpathSync(srcDir);
@@ -179,6 +192,10 @@ function _cloneRepository(r, mode) {
     if(destinationDir[0] != '/') {
         // Relative path detected, prefix it
         destinationDir = (r.src + '/' + r.dir).replace(/\/{2,}/, '/');
+    }
+
+    if(mode == 'install') {
+        lib.wipeDirectory(destinationDir);
     }
 
     overlayList.push({
@@ -234,7 +251,6 @@ function _cloneRepository(r, mode) {
             src: r.src, // pass this down for all levels of depth - we store repositories for all levels at the same flat level
             dir: depDir
         };
-        clog('dep is: ', o);
         _cloneRepository(o);
     });
 
@@ -242,12 +258,19 @@ function _cloneRepository(r, mode) {
     overlayList.forEach(function(overlaySet) {
         lib.overlayFilesRecursive(overlaySet.source, overlaySet.destination);
     });
-}
 
+    return {
+        src: srcDir
+    };
+}
 
 function update() {
     // NOTE: git tag -l <pattern> and git branch - l <pattern> will be very useful
     // So will git clone --branch <name> (<name> can be a tag too)
+}
+
+function _updateRepository(repoPath) {
+
 }
 
 // node mum install git@bitbucket.org:michaelwhite/php7.git#0.1.x ./test

@@ -15,7 +15,7 @@ $packageFileName = trim(implode('', $output));
 exec('mv '.$packageFileName.' published/', $output, $exitCode);
 echo $packageFileName.' published.'.PHP_EOL;
 
-echo "When you're ready to post this version live, run: npm publish";
+echo "When you're ready to post this version live, run: npm publish".PHP_EOL;
 
 /*// Parse version from file name
 $versionString = str_replace(['mum-', '.tgz'], '', $packageFileName);

@@ -68,7 +68,8 @@ const commands = {
             name: 'dir',
             default: '.'
         }
-    ]
+    ],
+    update: []
 };
 
 // Parse the command line arguments/commands
@@ -83,7 +84,7 @@ switch (command.name) {
         install(command.args.url, command.args.dir);
         break;
     case 'update':
-        clog('updater');
+        update();
         break;
 }
 
@@ -159,6 +160,8 @@ function _install(r) {
     }
 
     var installInfo = {
+        name: r.name,
+        version: r.version,
         url: r.url,
         sources: path.dirname(o.src),
         destination: fs.realpathSync(r.dir)
@@ -172,8 +175,7 @@ function _cloneRepository(r, mode) {
 
     var srcDir = r.src+'/../.mum/'+ r.name;
 
-    if(mode == 'install') {
-        clog('srcDir: '+srcDir, fs.realpathSync(path.dirname(srcDir)));
+    if((mode == 'install' || mode == 'update') && fs.existsSync(srcDir)) {
         lib.wipeDirectory(fs.realpathSync(path.dirname(srcDir)));
     }
 
@@ -265,13 +267,34 @@ function _cloneRepository(r, mode) {
 }
 
 function update() {
-    // NOTE: git tag -l <pattern> and git branch - l <pattern> will be very useful
-    // So will git clone --branch <name> (<name> can be a tag too)
+    // todo - try to work out a way to use git fetch, git pull, and git checkout that will satisfy deterministic dependency resolution and be more efficient than re-cloning the entire repository.
+    // NOTE: git tag -l <pattern> and git branch - l <pattern> may be very useful in this ^^^
+    // So might git clone --branch <name> (<name> can be a tag too) ^^^
+
+    // For now, just clone the repository again as if using an install but don't wipe the destination install directory
+    // Obtain the information provided in the original install command by reading the mumi.json file in the current directory
+
+    // If there is no mumi.json file we cannot continue with an update.
+    if(!fs.existsSync('./mumi.json')) {
+        lib.clog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
+        process.exit(1);
+    }
+
+    var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
+    if(!lib.isObject(mumi)) {
+        lib.clog('Unable to update. mumi.json contents are not an object.');
+        process.exit(1);
+    }
+
+    _cloneRepository({
+        name: mumi.name,
+        version: mumi.version,
+        url: mumi.url,
+        src: mumi.sources,
+        dir: mumi.destination
+    }, 'update');
 }
 
 function _updateRepository(repoPath) {
 
 }
-
-// node mum install git@bitbucket.org:michaelwhite/php7.git#0.1.x ./test
-// node mum git@bitbucket.org:michaelwhite/php7.git#0.1.x

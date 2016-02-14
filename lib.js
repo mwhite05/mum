@@ -318,20 +318,24 @@ module.exports = {
     },
 
     // @todo change this to an "overlay" method for copying files from their git repo to their target directory
-    generateAssets: function (sourcePath, targetPath, fileSystemContext, fileContentContext) {
+    overlayFilesRecursive: function (sourcePath, targetPath) {
         var self = this;
         self.clog('Source path: ' + sourcePath);
         self.clog('Target path: ' + targetPath);
-        mkdirp.sync(targetPath); // Ensure the target directory exists
 
-        self.clog('Made target path directory.');
+        if(! mkdirp.sync(targetPath)) {
+            self.clog('Could not create target directory for overlay operation: '+targetPath);
+            process.exit(1);
+        }
 
         self.clog('Overlaying: ' + sourcePath + ' onto: ' + targetPath);
 
         var excludes = [];
         excludes.push('.git');
+        excludes.push('.gitignore');
         excludes.push('.placeholder');
         excludes.push('.DS_Store');
+        excludes.push('mum.json');
         var excludeFlags = '';
         if (excludes.length) {
             excludeFlags = "--exclude '" + excludes.join("' --exclude '").trim() + "' ";
@@ -339,42 +343,12 @@ module.exports = {
 
         // Double quotes used to escape any spaces in the file paths, --ignore-existing used to only copy files that do not already exist
         var $command = 'rsync -vr --ignore-existing ' + excludeFlags + '"' + sourcePath + '/" "' + targetPath + '"';
-        child_process.execSync($command);
+        try {
+            child_process.execSync($command);
+        } catch(e) {
+            process.exit(1);
+        }
 
         self.clog('Done overlaying files.');
-
-        // We loop over the source paths because otherwise we are running this process on the entire site/system.
-        var sourcePaths = self.getDirectoryListing(sourcePath);
-
-        // Reverse the list of paths - we must work them backwards to avoid directory name changes causing failures later
-        sourcePaths.reverse();
-
-        sourcePaths.forEach(function (fileData, index) {
-            // Change out the base path being used
-            fileData.path = fileData.path.replace(sourcePath, targetPath);
-
-            var oldPath = fileData.path;
-            //self.clog('Working on: ' + oldPath);
-
-            try {
-                // Update the file contents
-                if (fileData.type == 'file') {
-                    var source = fs.readFileSync(fileData.path, 'utf8');
-                    var template = handlebars.compile(source);
-                    var output = template(fileContentContext);
-                    fs.writeFileSync(fileData.path, output, 'utf8');
-                }
-
-                // Rename the file if needed
-                var newPath = path.dirname(fileData.path) + '/' + self.updatePathName(path.basename(fileData.path), fileSystemContext);
-                if (newPath != oldPath) {
-                    fs.renameSync(oldPath, newPath);
-                }
-            } catch (e) {
-                self.clog('Failed to apply all contexts to: ' + oldPath);
-            }
-        });
-
-        self.clog('Done applying contexts to files.');
     }
 };

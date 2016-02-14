@@ -150,31 +150,13 @@ function install(url, dir) {
 }
 
 function _install(r) {
-    var deps = _cloneRepository(r, 'install');
-
-    deps.forEach(function(dep) {
-        var projectName = '';
-        if(lib.isDefined(dep.name)) {
-            projectName = dep.name;
-        }
-
-        if(!projectName) {
-            projectName = path.parse(path.basename(dep.url)).name;
-        }
-
-        var o = {
-            name: projectName,
-            url: dep.url,
-            version: dep.version,
-            dir: r.dir // use master level directory for cloning target
-        };
-        clog('dep is: ', o);
-        _cloneRepository(o);
-    });
+    _cloneRepository(r, 'install');
 
 }
 
 function _cloneRepository(r, mode) {
+    var overlayList = [];
+
     var srcDir = r.src+'/../.mum/'+ r.name;
 
     if(fs.existsSync(srcDir)) {
@@ -189,10 +171,23 @@ function _cloneRepository(r, mode) {
 
     srcDir = fs.realpathSync(srcDir);
 
-    clog('Located or created srcDir: '+srcDir);
+    var destinationDir = r.dir;
+
+    // Is this a relative path?
+    if(destinationDir[0] != '/') {
+        // Relative path detected, prefix it
+        destinationDir = (r.src + '/' + r.dir).replace(/\/{2,}/, '/');
+    }
+
+    overlayList.push({
+        source: srcDir, // The location of the local copy of the git repository
+        destination: destinationDir // The location of the files after they are installed (copied from the git repo to their target)
+    });
 
     // If the branch or tag is not present then it will return a fatal error and disconnect
     var $cmd = 'git clone --branch ' + r.version + ' "' + r.url + '" "' + srcDir + '"';
+
+    clog($cmd);
 
     try {
         child_process.execSync($cmd);
@@ -203,15 +198,40 @@ function _cloneRepository(r, mode) {
     // All done with cloning this repository - gather dependency information
 
     // get dependencies from mum.json in repository root
-    // todo recursive dependency resolution for every cloned repository
     // todo cyclic dependency protection
+    var dependencies = [];
     if(fs.existsSync(srcDir+'/mum.json')) {
         var mumInfo = JSON.parse(fs.readFileSync(srcDir + '/mum.json'));
         if(lib.isArray(mumInfo.dependencies)) {
-            return mumInfo.dependencies;
+            dependencies = mumInfo.dependencies;
         }
     }
-    return []; // No dependencies
+
+    dependencies.forEach(function(dep) {
+        var projectName = '';
+        if(lib.isDefined(dep.name)) {
+            projectName = dep.name;
+        }
+
+        if(!projectName) {
+            projectName = path.parse(path.basename(dep.url)).name;
+        }
+
+        var o = {
+            name: projectName,
+            url: dep.url,
+            version: dep.version,
+            src: r.src, // pass this down for all levels of depth - we store repositories for all levels at the same flat level
+            dir: dep.dir
+        };
+        clog('dep is: ', o);
+        _cloneRepository(o);
+    });
+
+    overlayList.reverse(); // Go backwards - the custom thing we are installing may have overrides for things defined in the dependencies
+    overlayList.forEach(function(overlaySet) {
+        lib.overlayFilesRecursive(overlaySet.source, overlaySet.destination);
+    });
 }
 
 
@@ -220,5 +240,5 @@ function update() {
     // So will git clone --branch <name> (<name> can be a tag too)
 }
 
-// node mum install git@bitbucket.org:michaelwhite/php7.git#0.1.x
+// node mum install git@bitbucket.org:michaelwhite/php7.git#0.1.x ./test
 // node mum git@bitbucket.org:michaelwhite/php7.git#0.1.x

@@ -8,7 +8,7 @@ Modern Update Manager (for git only at this time)
 
 Today's software is often comprised of many sub-components and it can be a challenge to manage those dependencies and ensure smooth installation and updates.
 
-Also, if you're like me you don't work with a single "stack" of software anymmore. You might leverage PHP, Python, NodeJS, Go, C, C++, etc. across different server environments.
+Also, if you're like me you don't work with a single "stack" of software anymore. You might leverage PHP, Python, NodeJS, Go, C, C++, etc. across different server environments.
 
 There are many installation and dependency resolution systems in the wild:
 
@@ -27,7 +27,7 @@ Additionally, some software may be stashed away in private access git repositori
 
 The overarching goal for mum is to provide a single interface with a clean and efficient way to deploy code to any environment from local machines up to production servers for any languages you work with.
 
-Please be aware that this does **not** mean mum is written in all languages. Mum will remain as a nodeJS package that is capable of installing from git repositories.
+Please be aware that this does **not** mean mum is written in all languages. Mum will remain as a nodeJS package that is capable of installing from git repositories and running commands that can leverage any other package manager or script you need to use for deployment.
 
 ---
 

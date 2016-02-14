@@ -323,8 +323,13 @@ module.exports = {
         self.clog('Source path: ' + sourcePath);
         self.clog('Target path: ' + targetPath);
 
-        if(! mkdirp.sync(targetPath)) {
-            self.clog('Could not create target directory for overlay operation: '+targetPath);
+        if(!fs.existsSync(sourcePath)) {
+            self.clog('Could not find the source directory for overlay operation: '+sourcePath);
+            process.exit(1);
+        }
+
+        if(! fs.existsSync(targetPath) && ! mkdirp.sync(targetPath)) {
+            self.clog('Could not find or create the destination directory for overlay operation: '+targetPath);
             process.exit(1);
         }
 

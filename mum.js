@@ -157,6 +157,8 @@ function _install(r) {
 function _cloneRepository(r, mode) {
     var overlayList = [];
 
+    clog('raw r.dir: ' + r.dir);
+
     var srcDir = r.src+'/../.mum/'+ r.name;
 
     if(fs.existsSync(srcDir)) {
@@ -217,12 +219,20 @@ function _cloneRepository(r, mode) {
             projectName = path.parse(path.basename(dep.url)).name;
         }
 
+        var depDir = dep.dir;
+
+        // Is this a relative path?
+        if(depDir[0] != '/') {
+            // Relative path detected, prefix it
+            depDir = (r.dir + '/' + dep.dir).replace(/\/{2,}/, '/');
+        }
+
         var o = {
             name: projectName,
             url: dep.url,
             version: dep.version,
             src: r.src, // pass this down for all levels of depth - we store repositories for all levels at the same flat level
-            dir: dep.dir
+            dir: depDir
         };
         clog('dep is: ', o);
         _cloneRepository(o);

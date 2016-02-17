@@ -6,11 +6,40 @@ Modern Update Manager (for git only at this time)
 
 ---
 
-## Features (as of 0.1.0-alpha)
+## Table of Contents
+
+* [Features](#features)
+    * [What is "stuff"](#define-stuff)
+* [Installing mum](#installing)
+    * [Ubuntu / Debian](#installing-debian)
+    * [CentOS](#installing-centos)
+    * [Mac](#installing-mac)
+    * [Windows](#installing-windows)
+* [Usage](#usage)
+    * [Prerequisites](#usage-prerequisites)
+    * [Commands](#usage-commands)
+* [Basic Tutorial](#mum-tutorial-basic)
+    * [Overview](#tutorial-basic-overview)
+    * [Basic Setup](#tutorial-basic-setup)
+    * [Installing the Site](#tutorial-basic-installing)
+    * [Inspecting the Command](#tutorial-basic-inspecting-command)
+* [Advanced Tutorial](#mum-tutorial-advanced)
+    * [Overview](#tutorial-advanced-overview)
+    * [Basic Setup](#tutorial-advanced-setup)
+    * [Installing the Site](#tutorial-advanced-installing)
+* [Triggers Tutorial (placeholder)](#mum-tutorial-triggers)
+    * [Overview](#tutorial-triggers-overview)
+* [Project Motivation](#project-motivation)
+* [Project Goals](#project-goals)
+* [Mum.json Format](#mum-json)
+
+---
+
+## [Features](id:features)
 
 * Install [stuff](#define-stuff) from a remote git repository to a local directory
 * Recursive dependency resolution (Caution: extremely basic implementation)
-* Update an existing project within having to pass any arguments to the command.
+* Update an existing project without having to pass any arguments to the command.
 
 
 **What is this version missing that I might expect it to have?**
@@ -47,20 +76,34 @@ Yep, you read that correctly - just about anything.
 ---
 
 
-## Installing mum
+## [Installing mum](id:installing)
 
-Pre-requisites: `nodejs (v4)`, `git`
+Pre-requisites for installing and using mum: `nodejs (v4.x)`, `git`
 
-#### Debian / Ubuntu
+#### [Debian / Ubuntu](id:installing-debian)
 
-To install for use globally: `sudo npm install -g mum`
+Ensure prerequisites are installed by running:
 
-To install for use only within the current directory: `sudo npm install mum`
+```
+$ curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
+$ sudo apt-get install -y nodejs git
+```
 
+To install mum for use globally: `sudo npm install -g mum`
 
-#### Other
+To install mum for use only within the current directory: `sudo npm install mum`
 
-No other installation instructions provided at this time.
+#### [CentOS](id:installing-centos)
+
+These instructions are not yet available. If you know what this process should be please submit a pull request with an update to this section of the readme file.
+
+#### [Mac](id:installing-mac)
+
+These instructions are not yet available. If you know what this process should be please submit a pull request with an update to this section of the readme file.
+
+#### [Windows](id:installing-windows)
+
+These instructions are not yet available. If you know what this process should be please submit a pull request with an update to this section of the readme file.
 
 
 ---
@@ -68,7 +111,7 @@ No other installation instructions provided at this time.
 
 ## Usage
 
-**Prerequisites:**
+### [Prerequisites](id:usage-prerequisites)
 
 * A git repository branch or tag that contains the stuff you want to deploy/install somewhere
 * A computer/server to install the [stuff](#define-stuff) to
@@ -79,7 +122,7 @@ No other installation instructions provided at this time.
 * [Optional] A `mum.json` in the root directory of your project
 See the [mum.json](#mum-json) section below for details on the `mum.json` format.
 
-### Commands
+### [Commands](id:usage-commands)
 
 * **Install -** Run: `sudo mum install <repositoryUrl>#<branchOrTag> <installationDirectory>`
 * **Update -** Change directory to the location of a `mumi.json` file and run: `sudo mum update`
@@ -91,26 +134,26 @@ See the [mum.json](#mum-json) section below for details on the `mum.json` format
 
 ## [Basic Tutorial](id:mum-tutorial-basic)
 
-### Overview
+### [Overview](id:tutorial-basic-overview)
 
-To keep the tutorial simple, we will use a static HTML web site (gasp!) that I set up as a [separate GitHub repository](https://github.com/mwhite05/mum-example/tree/static). The goal is to deploy that web site to a server. Please note that this basic example does _not_ show how to configure or leverage dependencies. See the [Advanced Tutorial](#mum-tutorial-advanced) for that information.
+To keep the tutorial simple, we will use a static HTML web site (gasp!) that I set up as a [separate GitHub repository](https://github.com/mwhite05/mum-example/tree/basic). The goal is to deploy that web site to a server. Please note that this basic example does _not_ show how to configure or leverage dependencies. See the [Advanced Tutorial](#mum-tutorial-advanced) for that information.
 
 Using mum for deploying a simple static website is perfectly acceptable but might be over the top. I'll leave that for you to judge.
 
 ( If you want to follow along, try using a [DigitalOcean](https://www.digitalocean.com/) LAMP one-click install to get a server up and running in about a minute. )
 
 
-### Basic Setup
+### [Basic Setup](id:tutorial-basic-setup)
 
 1. For this example, the target repository URL will be: `git@github.com:mwhite05/mum-example.git`
 2. Inside our *mum-example* git repository we have a branch named `basic` which contains the [stuff](#define-stuff) (in thise case html, css, & images) that we want to deploy or install.
-    * We could also be a tag instead of a branch. They work exactly the same way in mum.
+    * We could also use a tag instead of a branch. They work exactly the same way in mum.
 3. We also have a server. For clarity, we'll refer to the server as `foxtrot`.
 4. Our target installation directory on the `foxtrot` server is `/var/www/html`
 
 You can use whatever user access and permissions level you require but to keep this tutorial as simple as possible we will run all of the following commands as `sudo`.
 
-### Installing the Site
+### [Installing the Site](id:tutorial-basic-installing)
 
 The command to install the site is:
 
@@ -120,7 +163,7 @@ sudo mum install git@github.com:mwhite05/mum-example.git#basic /var/www/html
 
 That's all it takes to install the site. You're all done.
 
-### Inspecting the Command
+### [Inspecting the Command](id:tutorial-basic-inspecting-command)
 
 The format is: `mum install <repositoryUrl>#<branchOrTag> <installDirectory>`
 
@@ -137,13 +180,13 @@ Tags and branches are completely interchangeable. This behavior is directly supp
 
 ## [Advanced Tutorial](id:mum-tutorial-advanced)
 
-### Overview
+### [Overview](id:tutorial-advanced-overview)
 
-This tutorial shows an installation with a dependency on a configuration file stored separately from the main site files. This is done to keep the configuration outside of the web root so it is not directly accessible via the http server.
+This tutorial shows an installation with a dependency on a JavaScript file located in a separate repository from the main project. This example is illustrates how you can refer to external dependencies that might contain things such as third party libraries, other internal libraries or modules, configuration data, etc.
 
-### Basic Setup
+### [Basic Setup](id:tutorial-advanced-setup)
 
-We'll use the same repository that we used in the [Basic Tutorial](#mum-tutorial-basic) but this time we're going to use the branch named `advanced`.
+We'll use the same repository that we used in the [Basic Tutorial](#mum-tutorial-basic) but this time we're going to use the branch named [`advanced` branch](https://github.com/mwhite05/mum-example/tree/advanced).
 
 If you take a look at the `advanced` branch you'll find a new file named `mum.json`
 
@@ -167,7 +210,7 @@ The `dir` property tells mum where to install the contents of that repository. I
 
 **Note:** The recursive nature of dependencies means that the installation directory is also recursively relative. If a dependency A defines a dependency B, then the installation directory for dependency B will be relative to the installation directory of dependency A which is itself relative to the installation directory given to the mum command.
 
-### Installing the Site
+### [Installing the Site](id:tutorial-advanced-installing)
 
 To install the site just run:
 
@@ -184,7 +227,7 @@ Mum clones the repository, gathers a list of any dependencies defined in `mum.js
 
 ## [Triggers Tutorial](id:mum-tutorial-triggers)
 
-### Overview
+### [Overview](id:tutorial-triggers-overview)
 
 Example - maybe something like - removing unwanted files after deployment and setting file permissions and ownership.
 
@@ -197,17 +240,17 @@ What mum triggers are not: todo
 
 **Why triggers instead of more mum configuration properties?**
 
-No one enjoys feeling like they have to learn a whole new markup language just to write a configuration file. Mum doesn't need to do the work for you when it can trigger scripts of any kind. You or your team already know how to write those other scripts and you probably have some already written. Why should mum force you to convert those to another format that probably isn't as robust or easy to use as the scripts you already have? The answer: It shouldn't and won't.
+No one enjoys feeling like they have to learn a whole new markup language just to write a configuration file. Mum doesn't need to do the work for you when it can trigger scripts of any kind. You or your team know how to write those other scripts and you probably have some already written. Why should mum force you to convert those to another format that probably isn't as robust or easy to use as the scripts you already have? The answer: It shouldn't and won't.
 
 
 ---
 
 
-## Motivation
+## [Project Motivation](id:project-motivation)
 
 Today's software is often comprised of many sub-components and it can be a challenge to manage those dependencies and ensure smooth installation and updates.
 
-Also, if you're like me you don't work with a single "stack" of software anymore. You might leverage PHP, Python, NodeJS, Go, C, C++, etc. across different server environments.
+If you are like many developers today, you no longer work with a single "stack" of software. You might leverage PHP, Python, NodeJS, Go, C, C++, etc. across different server environments.
 
 There are many installation and dependency resolution systems in the wild:
 
@@ -228,7 +271,7 @@ The overarching goal for mum is to provide a single interface with a clean and e
 
 Please be aware that this does **not** mean mum is written in all languages. Mum will remain as a nodeJS package that is capable of installing from git repositories and running commands that can leverage any other package manager or script you need to use for deployment.
 
-### Misc.
+### [Misc. Information](id:project-motivation-misc-info)
 
 NPM is a popular package manager and chances are; if you found this mum package you already know how npm dependency resolution works.
 
@@ -239,7 +282,7 @@ Because of that fact, mum aims to support at least a subset of the dependency re
 
 ---
 
-## Goals
+## [Project Goals](id:project-goals)
 
 * Provide an update manager that can run on *nix and Windows.
 * Language independence. Use the same install tool and update manager for any repository you can access.

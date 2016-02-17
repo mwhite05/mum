@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.1.0-alpha.2
+
+* placeholder
+
 ### v0.1.0-alpha.1
 
 * Added a table of contents to the top of the readme file.

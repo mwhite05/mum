@@ -1,0 +1,27 @@
+#! /bin/bash
+
+INSTALL_DIRECTORY=""
+
+while getopts "d:" opt; do
+    case $opt in
+        d)
+            INSTALL_DIRECTORY=$OPTARG
+            ;;
+        \?)
+            echo "Invalid option -$OPTARG"
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument."
+            ;;
+    esac
+done
+
+if [ -z "$INSTALL_DIRECTORY" ]
+then
+    echo "Missing installation directory. Call this script like prepare -d /installation/directory"
+    exit 1
+fi
+
+echo "Bash: Preparing for install to: $INSTALL_DIRECTORY"
+
+# Do your own prep work here

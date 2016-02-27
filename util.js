@@ -24,8 +24,8 @@ module.exports = {
         install: {
             map: [
                 {
-                    source: '/',
-                    destination: '../'
+                    source: './',
+                    destination: './'
                 }
             ],
             scripts: {
@@ -124,6 +124,14 @@ module.exports = {
             process.exit(1);
         }
     },
+    _resolve(a, b) {
+        if(b[0] == '/') {
+            // b is an absolute path so we do not add a as a prefix
+            return path.resolve(b);
+        } else {
+            return path.resolve(a+'/'+b);
+        }
+    },
     installFromDirectory: function(sourceDirectory, installationDirectory, clean) {
         var self = this;
 
@@ -137,21 +145,37 @@ module.exports = {
 
         // Perform all configuration verification steps necessary
         if(! lib.isArray(mumc.install.map)) {
-            clog('Invalid mum.json configuration : The install.map property must be array<object>{source:<string>, destination:<string>}.');
+            clog('Invalid mum.json configuration : The install.map property must be an array<object>{source:<string>, destination:<string>}.');
+            process.exit(1);
+        }
+
+        if(! lib.isObject(mumc.install.scripts)) {
+            clog('Invalid mum.json configuration : The install.scripts property must be an <object>{before:<array><string>, after:<array><string>}.');
+            process.exit(1);
+        }
+
+        if(! lib.isArray(mumc.install.scripts.before)) {
+            clog('Invalid mum.json configuration : The install.scripts.before property must be an array<string>.');
+            process.exit(1);
+        }
+
+        if(! lib.isArray(mumc.install.scripts.after)) {
+            clog('Invalid mum.json configuration : The install.scripts.after property must be an array<string>.');
             process.exit(1);
         }
 
         // run before install scripts
+        mumc.install.scripts.before.forEach(function(scriptFile, index) {
+            var scriptFile = self._resolve(sourceDirectory, scriptFile);
+            clog(child_process.execSync('"'+scriptFile+'" -d "'+installationDirectory+'"').toString());
+        });
 
         // loop over each item in the installMap
         mumc.install.map.forEach(function(value, index) {
             // resolve the path for source
-            var source = path.resolve(sourceDirectory+value.source);
+            var source = self._resolve(sourceDirectory, value.source);
             // resolve the path for destination
-            if(value.destination[0] == '.') {
-                value.destination = '/'+value.destination;
-            }
-            var destination = path.resolve(installationDirectory+value.destination);
+            var destination = self._resolve(installationDirectory, value.destination);
 
             // Verify source
             self._validateSourceDirectory(source);
@@ -161,12 +185,15 @@ module.exports = {
                 mkdirp.sync(destination);
             }
 
-            clog('Syncing source: '+source+' to destination: '+destination);
             // sync source to destination
             lib.overlayFilesRecursive(source, destination);
         });
 
         // run after install scripts
+        mumc.install.scripts.after.forEach(function(scriptFile, index) {
+            var scriptFile = self._resolve(sourceDirectory, scriptFile);
+            clog(child_process.execSync('"'+scriptFile+'" -d "'+installationDirectory+'"').toString());
+        });
 
         clog('Installation complete.');
     },

@@ -3,27 +3,27 @@
     "install": {
         "map": [
             {
-                "source": "/config",
+                "source": "./config",
                 "destination": "../config"
             },
             {
-                "source": "/project",
+                "source": "./project",
                 "destination": "./"
             },
             {
-                "source": "/assets",
-                "destination": "./"
+                "source": "./vendor",
+                "destination": "./vendor"
             }
         ],
         "scripts": {
-            "before": ["/scripts/prepare.php"],
-            "after": ["/scripts/cleanup.php"]
+            "before": ["./scripts/prepare"],
+            "after": ["./scripts/after.php"]
         }
     },
     "update": {
         "scripts": {
-            "before": ["/scripts/prepare.php"],
-            "after": ["/scripts/cleanup.php"]
+            "before": ["./scripts/prepare.php"],
+            "after": ["./scripts/after.php"]
         }
     },
     "dependencies": [

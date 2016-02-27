@@ -1,0 +1,43 @@
+{
+    "name": "example",
+    "install": {
+        "map": [
+            {
+                "source": "/config",
+                "destination": "../config"
+            },
+            {
+                "source": "/project",
+                "destination": "./"
+            },
+            {
+                "source": "/assets",
+                "destination": "./"
+            }
+        ],
+        "scripts": {
+            "before": ["/scripts/prepare.php"],
+            "after": ["/scripts/cleanup.php"]
+        }
+    },
+    "update": {
+        "scripts": {
+            "before": ["/scripts/prepare.php"],
+            "after": ["/scripts/cleanup.php"]
+        }
+    },
+    "dependencies": [
+        {
+            "name": "mum-example",
+            "url": "git@github.com:mwhite05/mum-example-js.git#master",
+            "version": "0.1.0",
+            "installTo": "./js"
+        },
+        {
+            "name": "mum-example-config",
+            "url": "git@github.com:mwhite05/mum-example-js.git#config",
+            "version": "0.1.0",
+            "installTo": "./js"
+        }
+    ]
+}

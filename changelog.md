@@ -1,8 +1,9 @@
 # Changelog
 
-### v0.1.0-alpha.2
+### v0.2.0-alpha
 
-* placeholder
+* New mum.json format
+* Improved support for dependencies to avoid naming collisions.
 
 ### v0.1.0-alpha.1
 

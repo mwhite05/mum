@@ -222,6 +222,10 @@ module.exports = {
         });
     },
 
+    isDirectoryEmpty: function(directory) {
+        return (fs.readdirSync(directory).length == 0);
+    },
+
     getDirectoryListing: function (directoryPath, options, listing) {
         var self = this;
 

@@ -1,3 +1,10 @@
+# Custom / temporary
+.travis.yml
+example-mum.json
+test.js
+tmp.js
+
+# Standard
 .idea/
 .DS_Store
 .DS_Store?

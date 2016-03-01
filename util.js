@@ -1,5 +1,9 @@
 'use strict';
 const fs = require('fs');
+const unzip = require('unzip2');
+const zlib = require('zlib');
+//const tar = require('tar');
+const targz = require('tar.gz');
 const mkdirp = require('mkdirp');
 const lib = require('./lib.js');
 //const handlebars = require('handlebars');
@@ -125,12 +129,20 @@ module.exports = {
         }
     },
     _resolve(a, b) {
-        if(b[0] == '/') {
+        if(b[0] == '/' || b[0] == '\\') {
             // b is an absolute path so we do not add a as a prefix
             return path.resolve(b);
         } else {
+            a = a.replace(/\\\//g, ''); // trim off trailing slashes
             return path.resolve(a+'/'+b);
         }
+    },
+    _getMumCacheDirectory: function(installationDirectory) {
+        var mumDirectory = this._resolve(installationDirectory, '../.mum');
+        if(!fs.existsSync(mumDirectory)) {
+            mkdirp.sync(mumDirectory);
+        }
+        return mumDirectory;
     },
     installFromDirectory: function(sourceDirectory, installationDirectory, clean) {
         var self = this;
@@ -195,12 +207,82 @@ module.exports = {
             clog(child_process.execSync('"'+scriptFile+'" -d "'+installationDirectory+'"').toString());
         });
 
-        clog('Installation complete.');
+        clog('Installed from '+sourceDirectory+' to '+installationDirectory);
     },
-    installFromTarball: function(tarballFile, installationDirectory) {
-        this._prepareInstallationDirectory();
+    installFromArchive: function(archiveFile, installationDirectory) {
+        archiveFile = path.resolve(archiveFile);
+        installationDirectory = path.resolve(installationDirectory);
 
-        // TODO This should be easy enough - Unpack the tarball to .mum/.local/<nameOfTarball> then call this.installFromDirectory() using the local unpacked tarball as the source directory.
+        var archiveExtension = path.extname(archiveFile);
+
+        var cacheDirectory = this._getMumCacheDirectory(installationDirectory) + '/' + path.basename(archiveFile);
+
+        var self = this;
+
+        function handleExtractionError(error) {
+            clog(error);
+            clog('Could not extract the archive: '+archiveFile);
+            process.exit(1);
+        }
+
+        function afterExtraction() {
+            //Get top level contents of cache directory
+            var files = fs.readdirSync(cacheDirectory);
+            var directoryCount = 0;
+            var fileCount = 0;
+            var lastDirectory = '';
+            files.forEach(function (file) {
+                var filePath = cacheDirectory + '/' + file;
+                if (fs.statSync(filePath).isDirectory()) {
+                    if(filePath == '.' || filePath == '..') {
+                        return;
+                    }
+                    lastDirectory = filePath;
+                    directoryCount++;
+                } else {
+                    fileCount++;
+                }
+            });
+
+            var sourceDirectory = '';
+            // If a single folder is found with no files, use that as the source
+            if(directoryCount === 1 && fileCount === 0) {
+                sourceDirectory = lastDirectory;
+            } else {
+                // If more than one folder is found or there are files in the cache directory itself, use the cache directory as the source
+                sourceDirectory = cacheDirectory;
+            }
+
+            self.installFromDirectory(sourceDirectory, installationDirectory);
+        }
+
+        switch(archiveExtension.toLowerCase()) {
+            case '.tar':
+            case '.tgz':
+            case '.gz':
+                // (npm tar.gz)
+                targz().extract(archiveFile, cacheDirectory, function(err) {
+                    if(err) {
+                        handleExtractionError(err);
+                    } else {
+                        afterExtraction();
+                    }
+                });
+                break;
+            case '.zip':
+                // (npm unzip2)
+                fs.createReadStream(archiveFile).pipe(unzip.Extract({path: cacheDirectory})).on('error', handleExtractionError).on('close', afterExtraction);
+                break;
+            default:
+                clog('Unknown archive file type: '+archiveExtension);
+        }
+
+        // DID NOT WORK for .tgz / .tar.gz file (tar   [node-tar])
+        // var extractor = tar.Extract({
+        //     path: cacheDirectory
+        // }).on('error', handleExtractionError).on('end', afterExtraction);
+        //
+        // fs.createReadStream(archiveFile).on('error', handleExtractionError).pipe(extractor);
     },
     installFromRepository: function(repositoryUrl, installationDirectory) {
         this._prepareInstallationDirectory();

@@ -79,13 +79,26 @@ var command = lib.readCommandInput(commands);
 switch (command.name) {
     case 'help':
         // todo - write complete help docs
-        clog('Help docs in progress.');
+        clog('Help docs are a work in progress.');
         break;
     case 'install':
-        // TODO - detect type of source supplied (git repo url, tarball file, directory path)
-        //util.installFromDirectory(command.args.source, command.args.installationDirectory);
-        //util.installFromArchive(command.args.source, command.args.installationDirectory);
-        util.installFromRepository(command.args.source, command.args.installationDirectory);
+        try {
+            //clog('checking for a directory or file: ', command.args.source);
+            var stats = fs.statSync(command.args.source);
+            // If it is a directory, try installing from that directory
+            if(stats.isDirectory()) {
+                util.installFromDirectory(command.args.source, command.args.installationDirectory);
+            } else if(stats.isFile()) {
+                // Try installing from that file as if it were a .tar.gz or a .zip
+                util.installFromArchive(command.args.source, command.args.installationDirectory);
+            } else if(stats.isSymbolicLink()) {
+                clog('Mum does not currently support installing from symbolic links.');
+                process.exit(1);
+            }
+        } catch(e) {
+            // Try installing the source as if it were a repository URL
+            util.installFromRepository(command.args.source, command.args.installationDirectory);
+        }
         break;
     case 'update':
         update();

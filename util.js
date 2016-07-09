@@ -2,11 +2,11 @@
 const fs = require('fs');
 const unzip = require('unzip2');
 const zlib = require('zlib');
-//const tar = require('tar');
 const targz = require('tar.gz');
+const sha1 = require('sha1');
+const URL = require('url');
 const mkdirp = require('mkdirp');
 const lib = require('./lib.js');
-//const handlebars = require('handlebars');
 const path = require('path');
 const extend = require('extend');
 const child_process = require('child_process');
@@ -56,6 +56,42 @@ module.exports = {
     * If the commit-ish portion of the URL is blank or left of entirely, the default is master.
     *
     */
+    _cloneRepository: function(repositoryUrl, cloneTargetDirectory) {
+        lib.wipeDirectory(cloneTargetDirectory);
+
+        // If the branch or tag is not present then it will return a fatal error and disconnect
+        var cmd = 'git clone "' + repositoryUrl + '" "' + cloneTargetDirectory + '"';
+
+        clog(cmd);
+
+        try {
+            child_process.execSync(cmd);
+        } catch(e) {
+            return false;
+        }
+
+        return true;
+    },
+    _checkOutCommitIsh: function(repositoryPath, commitIsh) {
+        // If the hash, branch or tag is not present then it will return a fatal error and disconnect
+        var cmd = 'git checkout "' + commitIsh+'"';
+
+        clog(cmd);
+
+        try {
+            var cwd = process.cwd();
+            // Change directories to the target directory (which should be home to a git repository)
+            process.chdir(repositoryPath);
+            // Run the checkout command
+            child_process.execSync(cmd);
+            // Change directories back to the original working directory
+            process.chdir(cwd);
+        } catch(e) {
+            return false;
+        }
+
+        return true;
+    },
     _getCommitIsh: function(repositoryUrl) {
         var parts = URL.parse(repositoryUrl);
         var commitIsh = parts.hash.replace('#', ''); // get the commit-ish (npm term) from the end of the url
@@ -108,7 +144,7 @@ module.exports = {
             }
         }
     },
-    _readMumJson(file) {
+    _readMumJson: function(file) {
         if(! fs.existsSync(file)) {
             return this._defaultMumConfig;
         }
@@ -128,7 +164,7 @@ module.exports = {
             process.exit(1);
         }
     },
-    _resolve(a, b) {
+    _resolve: function(a, b) {
         if(b[0] == '/' || b[0] == '\\') {
             // b is an absolute path so we do not add a as a prefix
             return path.resolve(b);
@@ -147,7 +183,7 @@ module.exports = {
     installFromDirectory: function(sourceDirectory, installationDirectory, clean) {
         var self = this;
 
-        clean = typeof(clean) == 'undefined' ? false : true;
+        clean = (typeof(clean) != 'undefined');
         sourceDirectory = path.resolve(sourceDirectory);
         installationDirectory = path.resolve(installationDirectory);
         this._validateSourceDirectory(sourceDirectory);
@@ -285,62 +321,39 @@ module.exports = {
         // fs.createReadStream(archiveFile).on('error', handleExtractionError).pipe(extractor);
     },
     installFromRepository: function(repositoryUrl, installationDirectory) {
-        this._prepareInstallationDirectory();
 
         // Handles version scenarios like >, <, >=, <=, =
         // Syntax is part of commit-ish like: #>=2.0.0
         // Will use node-semver to figure this out - probably will have to clone the repo first and get lists of all tags and branches to use for comparison in a loop
+        // Clone of initial repository should be to specific (known) location so that the directory name does not conflict with that of any named dependencies
 
-        /*
-            If github url then
-                create https version of the url
-                look up a list of the tags and heads using git ls-remote --tags --heads <url>
-            Else
-                try to use git ls-remote with the URL we were given
-            End
+        // Separate the commit-ish from the repository URL
+        var repositoryUrlParts = URL.parse(repositoryUrl);
 
-            If we have a valid list of tags and heads (branches)
-                Get target ref with any version modifiers (>, <, >=, <=) applied (tag/branch)
-                If no target ref found matching the supplied commit-ish then we were probably given a bad version OR a commit sha-1 hash
-                    Try cloning the target as if it were a commit sha-1 hash
-                    If error
-                        Print a message about being unable to clone the repository for the supplied commit-ish.
-                        Exit
-                    End
-                Else
-                    Try cloning the target as if it were a tag or branch (these are interchangeable)
-                    If error
-                        Print a message about being unable to clone the repository for the supplied sha-1 hash.
-                        Exit
-                    End
-                End
-            Else
-                Try cloning the target URL _without_ specifying a commit sha-1, tag, or branch
-                If error
-                    Print a message about being unable to clone the repository
-                    Exit
-                End
+        var commitIsh = repositoryUrlParts.hash.replace('#', ''); // get the commit-ish (npm term) from the end of the url
+        repositoryUrl = repositoryUrlParts.path;
 
-                Get a list of branches and tags from the local clone of the repository
-                Get target ref with any version modifiers (>, <, >=, <=) applied (tag/branch)
+        var hashedUrl = sha1(repositoryUrl);
+        var cacheDirectory = this._getMumCacheDirectory(installationDirectory)+'/'+hashedUrl;
 
-                If no target ref found matching the supplied commit-ish then we were probably given a bad version OR a commit sha-1 hash
-                    Try checking out the target as if it were a commit sha-1 hash
-                    If error
-                        Print a message about being unable to clone the repository for the supplied commit-ish.
-                        Exit
-                    End
-                Else
-                    Try checking out the target as if it were a tag or branch (these are interchangeable)
-                    If error
-                        Print a message about being unable to clone the repository for the supplied sha-1 hash.
-                        Exit
-                    End
-                End
-            End
+        if(fs.existsSync(cacheDirectory)) {
+            lib.wipeDirectory(cacheDirectory);
+        } else if(! mkdirp.sync(cacheDirectory)) {
+            clog('Could not create clone target directory: '+cacheDirectory);
+            process.exit(1);
+        }
 
-            Install from directory
-        */
+        // Try cloning the target repository
+        if(!this._cloneRepository(repositoryUrl, cacheDirectory)) {
+            clog('Could not clone repository: '+repositoryUrl);
+            process.exit(1);
+        }
 
+        // Attempt to check out the target commitIsh
+        this._checkOutCommitIsh(cacheDirectory, commitIsh);
+
+        clog(''); // Empty line in the console for readability
+
+        this.installFromDirectory(cacheDirectory, installationDirectory);
     }
 };

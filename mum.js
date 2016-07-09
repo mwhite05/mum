@@ -84,7 +84,8 @@ switch (command.name) {
     case 'install':
         // TODO - detect type of source supplied (git repo url, tarball file, directory path)
         //util.installFromDirectory(command.args.source, command.args.installationDirectory);
-        util.installFromArchive(command.args.source, command.args.installationDirectory);
+        //util.installFromArchive(command.args.source, command.args.installationDirectory);
+        util.installFromRepository(command.args.source, command.args.installationDirectory);
         break;
     case 'update':
         update();

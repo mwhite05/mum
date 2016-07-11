@@ -82,25 +82,11 @@ switch (command.name) {
         clog('Help docs are a work in progress.');
         break;
     case 'install':
-        try {
-            //clog('checking for a directory or file: ', command.args.source);
-            var stats = fs.statSync(command.args.source);
-            // If it is a directory, try installing from that directory
-            if(stats.isDirectory()) {
-                util.installFromDirectory(command.args.source, command.args.installationDirectory);
-            } else if(stats.isFile()) {
-                // Try installing from that file as if it were a .tar.gz or a .zip
-                util.installFromArchive(command.args.source, command.args.installationDirectory);
-            } else if(stats.isSymbolicLink()) {
-                clog('Mum does not currently support installing from symbolic links.');
-                process.exit(1);
-            }
-        } catch(e) {
-            // Try installing the source as if it were a repository URL
-            util.installFromRepository(command.args.source, command.args.installationDirectory);
-        }
+        util.install(command.args.source, command.args.installationDirectory);
+        util.resetBaseLevelInstallationDirectory();
         break;
     case 'update':
-        update();
+        clog('Running an update is not yet supported.');
+        //util.update(target);
         break;
 }

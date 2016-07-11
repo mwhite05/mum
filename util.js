@@ -23,6 +23,7 @@ const clog = lib.clog;
 */
 
 module.exports = {
+    _baseLevelInstallationDirectory: null,
     _defaultMumConfig: {
         name: null,
         install: {
@@ -47,9 +48,9 @@ module.exports = {
     },
     _defaultMumDependency: {
         name: null,
-        url: null,
-        version: null,
-        installTo: null
+        source: null,
+        installTo: null,
+        config: {}
     },
     /**
     * A commit-ish can be any of: sha-1 hash for a specific commit, branch name, tag name.
@@ -146,15 +147,15 @@ module.exports = {
     },
     _readMumJson: function(file) {
         if(! fs.existsSync(file)) {
-            return this._defaultMumConfig;
+            return extend({}, this._defaultMumConfig);
         }
 
         var mumc = JSON.parse(fs.readFileSync(file));
         if(! lib.isObject(mumc)) {
-            return this._defaultMumConfig;
+            return extend({}, this._defaultMumConfig);
         }
 
-        mumc = extend(this._defaultMumConfig, mumc);
+        mumc = extend({}, this._defaultMumConfig, mumc);
 
         return mumc;
     },
@@ -174,7 +175,7 @@ module.exports = {
         }
     },
     _getMumCacheDirectory: function(installationDirectory) {
-        var mumDirectory = this._resolve(installationDirectory, '../.mum');
+        var mumDirectory = this._resolve(this._baseLevelInstallationDirectory, '../.mum');
         if(!fs.existsSync(mumDirectory)) {
             mkdirp.sync(mumDirectory);
         }
@@ -244,6 +245,20 @@ module.exports = {
         });
 
         clog('Installed from '+sourceDirectory+' to '+installationDirectory);
+
+        clog('Checking for dependencies.');
+
+        if(mumc.dependencies.length) {
+            clog('Found dependencies.');
+            mumc.dependencies.forEach(function(dependency, index) {
+                var dep = extend({}, self._defaultMumDependency, dependency);
+                if(dep.installTo[0] == '.') {
+                    dep.installTo = installationDirectory+'/'+dep.installTo;
+                }
+                clog('Installing dependency from: ', dep.source, ' to ', dep.installTo);
+                self.install(dep.source, dep.installTo);
+            });
+        }
     },
     installFromArchive: function(archiveFile, installationDirectory) {
         archiveFile = path.resolve(archiveFile);
@@ -355,5 +370,51 @@ module.exports = {
         clog(''); // Empty line in the console for readability
 
         this.installFromDirectory(cacheDirectory, installationDirectory);
+    },
+    install: function(source, target) {
+        var installType = '';
+
+        //target = fs.realpathSync(target);
+
+        // @todo - set this new property from other entry points - also set via a method so that it only gets set once per reset
+        if(this._baseLevelInstallationDirectory === null) {
+            this._baseLevelInstallationDirectory = target.replace(/\/+$/);
+        }
+
+        try {
+            clog('checking for a directory or file: ', source);
+            //var tmpSource = fs.realpathSync(source);
+            var stats = fs.statSync(source);
+            //clog(stats);
+            if(stats.isDirectory()) {
+                installType = 'directory';
+            } else if(stats.isFile()) {
+                installType = 'file';
+            } else if(stats.isSymbolicLink()) {
+                clog('Mum does not currently support installing from symbolic links.');
+                process.exit(1);
+            }
+        } catch(e) {
+            installType = 'repository';
+        }
+
+        clog('Install type: ', installType);
+        switch(installType) {
+            case 'directory':
+                // Try installing from that directory
+                this.installFromDirectory(source, target);
+                break;
+            case 'file':
+                // Try installing from that file as if it were a .tar.gz or a .zip
+                this.installFromArchive(source, target);
+                break;
+            case 'repository':
+                // Try installing the source as if it were a repository URL
+                this.installFromRepository(source, target);
+                break;
+        }
+    },
+    resetBaseLevelInstallationDirectory: function() {
+        this._baseLevelInstallationDirectory = null;
     }
 };

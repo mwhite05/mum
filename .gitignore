@@ -3,6 +3,7 @@
 example-mum.json
 test.js
 tmp.js
+tests/www/*
 
 # Standard
 .idea/

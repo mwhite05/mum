@@ -1,0 +1,5 @@
+#! /bin/bash
+
+node ../mum.js install git@github.com:mwhite05/mum-example.git#advanced ./www/html
+#node ../mum.js install git@github.com:mwhite05/mum-example.git#basic-tag ./www/html
+#node ../mum.js install git@github.com:mwhite05/mum-example.git#ef68a3c ./www/html

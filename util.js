@@ -30,7 +30,7 @@ module.exports = {
             map: [
                 {
                     source: './',
-                    destination: './'
+                    installTo: './'
                 }
             ],
             scripts: {
@@ -47,7 +47,6 @@ module.exports = {
         dependencies: []
     },
     _defaultMumDependency: {
-        name: null,
         source: null,
         installTo: null,
         config: {}
@@ -267,17 +266,6 @@ module.exports = {
             lib.overlayFilesRecursive(source, destination);
         });
 
-        // run after install scripts
-        cwd = process.cwd();
-        process.chdir(installationDirectory);
-        mumc.install.scripts.after.forEach(function(scriptFile, index) {
-            var scriptFile = self._resolve(sourceDirectory, scriptFile);
-            // Force-set executable permissions on the target script file
-            clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
-            clog(child_process.execSync('"'+scriptFile+'"').toString());
-        });
-        process.chdir(cwd);
-
         clog('Installed from '+sourceDirectory+' to '+installationDirectory);
 
         clog('Checking for dependencies.');
@@ -293,6 +281,17 @@ module.exports = {
                 self.install(dep.source, dep.installTo);
             });
         }
+
+        // run after install scripts
+        cwd = process.cwd();
+        process.chdir(installationDirectory);
+        mumc.install.scripts.after.forEach(function(scriptFile, index) {
+            var scriptFile = self._resolve(sourceDirectory, scriptFile);
+            // Force-set executable permissions on the target script file
+            clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+            clog(child_process.execSync('"'+scriptFile+'"').toString());
+        });
+        process.chdir(cwd);
     },
     installFromArchive: function(archiveFile, installationDirectory) {
         archiveFile = path.resolve(archiveFile);
@@ -427,7 +426,7 @@ module.exports = {
                 installTo: target
             };
 
-            fs.writeFileSync('./mumi.json', JSON.stringify(mumi));
+            fs.writeFileSync(this._baseLevelInstallationDirectory+'/../mumi.json', JSON.stringify(mumi));
         }
 
         try {

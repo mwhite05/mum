@@ -1,6 +1,6 @@
 # mum
 
-Currently on version: `0.1.0-alpha.2`
+Currently on version: `0.2.0-alpha`
 
 Modern Update Manager (for git only at this time)
 
@@ -225,7 +225,7 @@ Mum clones the repository, gathers a list of any dependencies defined in `mum.js
 
 ## [Install from Directory Tutorial](id:install-from-directory)
 
-todo - write the documentation for installing from a directory (it's very very easy)
+You can provide a directory path as the source parameter for installation.
 
 e.g. `sudo mum install ~/myproject /var/www/myproject`
 
@@ -233,7 +233,7 @@ e.g. `sudo mum install ~/myproject /var/www/myproject`
 
 ## [Install from Tarball or Zip Archive Tutorial](id:install-from-archive)
 
-todo - write the documentation for installing from an archive file (it's very very easy)
+You can provide a zip or tarball file as the source parameter for installation.
 
 e.g. `sudo mum install ~/myproject.zip /var/www/myproject`
 
@@ -245,19 +245,28 @@ e.g. `sudo mum install ~/myproject.tar.gz /var/www/myproject`
 
 ### [Overview](id:tutorial-triggers-overview)
 
-Example usage: setting file and directory permissions and ownership after an installation is run.
+Currently ONLY installation triggers are supported. The update command ALSO runs any installation triggers defined.
 
-(the todo items below are placeholders for later once mum triggers actually exist)
+**What are mum triggers?**
 
-What are mum triggers: todo
-
-What mum triggers are not: todo
-
+Triggers are just executable that you want to run before or after installation. You can use any executable including BASH/PHP/Ruby/Python/etc. scripts as well as any binary executable. You can reference executable files inside your project or anywhere else.
 
 **Why triggers instead of more mum configuration properties?**
 
 No one enjoys feeling like they have to learn a whole new markup language just to write a configuration file. Mum doesn't need to do the work for you when it can trigger scripts of any kind. You or your team know how to write those other scripts and you probably have some already written. Why should mum force you to convert those to another format that probably isn't as robust or easy to use as the scripts you already have? The answer: It shouldn't and won't.
 
+**Example configuration using a trigger to run a bash script inside the project after installation:**
+
+```
+{
+    "install": {
+        "scripts": {
+            "before": [],
+            "after": ["./scripts/after-install"]
+        }
+    }
+}
+```
 
 ---
 
@@ -288,15 +297,6 @@ The overarching goal for mum is to provide a single interface with a clean and e
 
 Please be aware that this does **not** mean mum is written in all languages. Mum will remain as a nodeJS package that is capable of installing from git repositories and running commands that can leverage any other package manager or script you need to use for deployment.
 
-### [Misc. Information](id:project-motivation-misc-info)
-
-NPM is a popular package manager and chances are; if you found this mum package you already know how npm dependency resolution works.
-
-Because of that fact, mum aims to support at least a subset of the dependency resolution behavior that npm uses. Please note that mum has some distinct differences from the way npm works so in those areas the mum dependency resolution will differ as required.
-
-* [Node JS package definitions](https://docs.npmjs.com/files/package.json#dependencies).
-* [Npm semver](https://docs.npmjs.com/misc/semver)
-
 ---
 
 ## [Project Goals](id:project-goals)
@@ -312,21 +312,48 @@ Because of that fact, mum aims to support at least a subset of the dependency re
 
 ## [Mum.json Format](id:mum-json)
 
-Currently the format is _very_ basic. It is just a `dependencies` property that is an array. Each element within the array must be an object with the properties `url`, `version` and `dir`.
+Currently the format is fairly basic.
 
-* `source` is the directory path, tar/zip file path, or URL of the git repository to install from
-* `installTo` is the target installation path for the contents of the cloned branch relative to the installation directory for the repository referencing the dependency. This path can also be a root-relative path such as `/usr/local/bin`
+* `install` is the top level object to define installation related configuration options.
+    * `map` is an array that defines a custom installation instruction set. Use this if you want to vary where and how your directories are installed.
+        * Each map entry is an object that must contain the following required keys:
+            * `source` The source directory within the project to set a custom installation target directory for.
+            * `installTo` is the target installation path for the contents of the source directory.
+* `dependencies` is an array that defines a list of repositories, directories, or archive files that are also needed to install properly.
+    * Each dependency entry is an object that must contain the following required keys:
+        * `source` is the directory path, tar/zip file path, or URL of the git repository to install from
+        * `installTo` is the target installation path for the contents of the cloned branch relative to the installation directory for the repository referencing the dependency. This path can also be a root-relative path such as `/usr/local/bin`
+
+Advanced configuration example (most options used).
 
 ```
 {
+    "install": {
+        "map": [
+            {
+                "source": "./wp-config",
+                "installTo": "../"
+            },
+            {
+                "source": "./wp-content",
+                "installTo": "./wp-content"
+            }
+        ],
+        "scripts": {
+            "before": [],
+            "after": ["./scripts/post-install"]
+        }
+    },
     "dependencies": [
         {
-            "source": "git@github.com:mwhite05/mum-example-js.git#master",
-            "installTo": "./js"
+            "source": "git@github.com:WordPress/WordPress.git#4.5.3",
+            "installTo": "./"
         }
     ]
 }
 ```
+
+Example of installing to an absolute (root-relative) path instead of relative to the parent project installation directory.
 
 ```
 {

@@ -100,14 +100,13 @@ module.exports = {
         cmds.push('git checkout "' + commitIsh+'"');
         cmds.push('git pull');
 
-        clog(cmd);
-
         try {
             var cwd = process.cwd();
             // Change directories to the target directory (which should be home to a git repository)
             process.chdir(repositoryPath);
             // Run the commands
             cmds.forEach(function(cmd, index) {
+                clog(cmd);
                 child_process.execSync(cmd);
             });
             // Change directories back to the original working directory
@@ -239,17 +238,22 @@ module.exports = {
         }
 
         // run before install scripts
+        var cwd = process.cwd();
+        process.chdir(installationDirectory);
         mumc.install.scripts.before.forEach(function(scriptFile, index) {
             var scriptFile = self._resolve(sourceDirectory, scriptFile);
-            clog(child_process.execSync('"'+scriptFile+'" -d "'+installationDirectory+'"').toString());
+            // Force-set executable permissions on the target script file
+            clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+            clog(child_process.execSync('"'+scriptFile+'"').toString());
         });
+        process.chdir(cwd);
 
         // loop over each item in the installMap
         mumc.install.map.forEach(function(value, index) {
             // resolve the path for source
             var source = self._resolve(sourceDirectory, value.source);
             // resolve the path for destination
-            var destination = self._resolve(installationDirectory, value.destination);
+            var destination = self._resolve(installationDirectory, value.installTo);
 
             // Verify source
             self._validateSourceDirectory(source);
@@ -264,10 +268,15 @@ module.exports = {
         });
 
         // run after install scripts
+        cwd = process.cwd();
+        process.chdir(installationDirectory);
         mumc.install.scripts.after.forEach(function(scriptFile, index) {
             var scriptFile = self._resolve(sourceDirectory, scriptFile);
-            clog(child_process.execSync('"'+scriptFile+'" -d "'+installationDirectory+'"').toString());
+            // Force-set executable permissions on the target script file
+            clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+            clog(child_process.execSync('"'+scriptFile+'"').toString());
         });
+        process.chdir(cwd);
 
         clog('Installed from '+sourceDirectory+' to '+installationDirectory);
 
@@ -376,21 +385,25 @@ module.exports = {
         var hashedUrl = sha1(repositoryUrl);
         var cacheDirectory = this._getMumCacheDirectory(installationDirectory)+'/'+hashedUrl;
 
-        if(fs.existsSync(cacheDirectory)) {
+        if(!fs.existsSync(cacheDirectory)) {
             //lib.wipeDirectory(cacheDirectory);
-            // Try cloning the target repository
-            if(!this._cloneRepository(repositoryUrl, cacheDirectory)) {
-                clog('Could not clone repository: '+repositoryUrl);
-                process.exit(1);
-            }
-        } else {
             if(! mkdirp.sync(cacheDirectory)) {
                 clog('Could not create clone target directory: '+cacheDirectory);
                 process.exit(1);
             }
-            this._updateLocalRepository(cacheDirectory, commitIsh);
         }
 
+        // Check for a git repository inside the target directory
+        if(fs.existsSync(cacheDirectory+'/.git')) {
+            // Try updating the existing repository clone
+            this._updateLocalRepository(cacheDirectory, commitIsh);
+        } else {
+            // Try cloning the target repository
+            if(!this._cloneRepository(repositoryUrl, cacheDirectory)) {
+                clog('Could not clone repository: ' + repositoryUrl);
+                process.exit(1);
+            }
+        }
 
         // Attempt to check out the target commitIsh
         this._checkOutCommitIsh(cacheDirectory, commitIsh);

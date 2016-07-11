@@ -3,7 +3,14 @@
 ### v0.2.0-alpha
 
 * New mum.json format
+* Support for running custom scripts (triggers) before and after installation.
 * Improved support for dependencies to avoid naming collisions.
+* Added support for installing from a local directory
+* Added support for installing from a local tar or zip archive file.
+* Added the ability to install from a git repository at a specific commit-ish (tag/branch/sha1).
+* Added support for automatically detecting which type of source is provided. (Directory, tar/zip file, repository URL)
+* Added support for setting root-relative (absolute) paths in the mum.json configuration `installTo` property.
+* Updated the readme to document the new features and mum.json format.
 
 ### v0.1.0-alpha.1
 

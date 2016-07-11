@@ -93,6 +93,31 @@ module.exports = {
 
         return true;
     },
+    _updateLocalRepository: function(repositoryPath, commitIsh) {
+        // If the hash, branch or tag is not present then it will return a fatal error and disconnect
+        var cmds = [];
+        cmds.push('git fetch');
+        cmds.push('git checkout "' + commitIsh+'"');
+        cmds.push('git pull');
+
+        clog(cmd);
+
+        try {
+            var cwd = process.cwd();
+            // Change directories to the target directory (which should be home to a git repository)
+            process.chdir(repositoryPath);
+            // Run the commands
+            cmds.forEach(function(cmd, index) {
+                child_process.execSync(cmd);
+            });
+            // Change directories back to the original working directory
+            process.chdir(cwd);
+        } catch(e) {
+            return false;
+        }
+
+        return true;
+    },
     _getCommitIsh: function(repositoryUrl) {
         var parts = URL.parse(repositoryUrl);
         var commitIsh = parts.hash.replace('#', ''); // get the commit-ish (npm term) from the end of the url
@@ -352,17 +377,20 @@ module.exports = {
         var cacheDirectory = this._getMumCacheDirectory(installationDirectory)+'/'+hashedUrl;
 
         if(fs.existsSync(cacheDirectory)) {
-            lib.wipeDirectory(cacheDirectory);
-        } else if(! mkdirp.sync(cacheDirectory)) {
-            clog('Could not create clone target directory: '+cacheDirectory);
-            process.exit(1);
+            //lib.wipeDirectory(cacheDirectory);
+            // Try cloning the target repository
+            if(!this._cloneRepository(repositoryUrl, cacheDirectory)) {
+                clog('Could not clone repository: '+repositoryUrl);
+                process.exit(1);
+            }
+        } else {
+            if(! mkdirp.sync(cacheDirectory)) {
+                clog('Could not create clone target directory: '+cacheDirectory);
+                process.exit(1);
+            }
+            this._updateLocalRepository(cacheDirectory, commitIsh);
         }
 
-        // Try cloning the target repository
-        if(!this._cloneRepository(repositoryUrl, cacheDirectory)) {
-            clog('Could not clone repository: '+repositoryUrl);
-            process.exit(1);
-        }
 
         // Attempt to check out the target commitIsh
         this._checkOutCommitIsh(cacheDirectory, commitIsh);
@@ -379,6 +407,14 @@ module.exports = {
         // @todo - set this new property from other entry points - also set via a method so that it only gets set once per reset
         if(this._baseLevelInstallationDirectory === null) {
             this._baseLevelInstallationDirectory = target.replace(/\/+$/);
+
+            // Write the mumi.json file
+            var mumi = {
+                source: source,
+                installTo: target
+            };
+
+            fs.writeFileSync('./mumi.json', JSON.stringify(mumi));
         }
 
         try {
@@ -413,6 +449,21 @@ module.exports = {
                 this.installFromRepository(source, target);
                 break;
         }
+    },
+    update: function() {
+        if(!fs.existsSync('./mumi.json')) {
+            clog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
+            process.exit(1);
+        }
+
+        var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
+        if(!lib.isObject(mumi)) {
+            clog('Unable to update. mumi.json contents are not a valid JSON object.');
+            process.exit(1);
+        }
+
+        // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
+        this.install(mumi.source, mumi.installTo);
     },
     resetBaseLevelInstallationDirectory: function() {
         this._baseLevelInstallationDirectory = null;

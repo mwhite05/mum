@@ -245,7 +245,7 @@ e.g. `sudo mum install ~/myproject.tar.gz /var/www/myproject`
 
 ### [Overview](id:tutorial-triggers-overview)
 
-Example - maybe something like - removing unwanted files after deployment and setting file permissions and ownership.
+Example usage: setting file and directory permissions and ownership after an installation is run.
 
 (the todo items below are placeholders for later once mum triggers actually exist)
 

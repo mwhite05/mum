@@ -86,7 +86,6 @@ switch (command.name) {
         util.resetBaseLevelInstallationDirectory();
         break;
     case 'update':
-        clog('Running an update is not yet supported.');
-        //util.update(target);
+        util.update();
         break;
 }

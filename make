@@ -6,6 +6,10 @@ echo "Packing...".PHP_EOL;
 $output = [];
 $exitCode = 0;
 
+// Clean up the tests area
+$command = './tests/reset';
+exec($command.' 2>&1', $output, $exitCode);
+
 // Pack the NPM package
 $command = 'npm pack';
 exec($command.' 2>&1', $output, $exitCode);

@@ -346,10 +346,12 @@ module.exports = {
     },
 
     // @todo change this to an "overlay" method for copying files from their git repo to their target directory
-    overlayFilesRecursive: function (sourcePath, targetPath) {
+    overlayFilesRecursive: function (sourcePath, targetPath, overwrite) {
         var self = this;
         self.clog('Source path: ' + sourcePath);
         self.clog('Target path: ' + targetPath);
+
+        overwrite = (typeof(overwrite) != 'undefined') ? overwrite : false;
 
         if(!fs.existsSync(sourcePath)) {
             self.clog('Could not find the source directory for overlay operation: '+sourcePath);
@@ -371,11 +373,15 @@ module.exports = {
         excludes.push('mum.json');
         var excludeFlags = '';
         if (excludes.length) {
-            excludeFlags = "--exclude '" + excludes.join("' --exclude '").trim() + "' ";
+            excludeFlags = " --exclude '" + excludes.join("' --exclude '").trim() + "' ";
         }
 
         // Double quotes used to escape any spaces in the file paths, --ignore-existing used to only copy files that do not already exist
-        var $command = 'rsync -vr --ignore-existing ' + excludeFlags + '"' + sourcePath + '/" "' + targetPath + '"';
+        var ignoreExisting = ' --ignore-existing';
+        if(overwrite === true) {
+            ignoreExisting = '';
+        }
+        var $command = 'rsync -vr' + ignoreExisting + excludeFlags + '"' + sourcePath + '/" "' + targetPath + '"';
         try {
             child_process.execSync($command);
         } catch(e) {

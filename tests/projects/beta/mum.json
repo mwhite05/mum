@@ -4,15 +4,15 @@
         "map": [
             {
                 "source": "./config",
-                "destination": "../config"
+                "installTo": "../config"
             },
             {
                 "source": "./project",
-                "destination": "./"
+                "installTo": "./"
             },
             {
                 "source": "./vendor",
-                "destination": "./vendor"
+                "installTo": "./vendor"
             }
         ],
         "scripts": {

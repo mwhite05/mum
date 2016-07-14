@@ -23,6 +23,7 @@ const clog = lib.clog;
 */
 
 module.exports = {
+    _installationConfirmed: false,
     _baseLevelInstallationDirectory: null,
     _defaultMumConfig: {
         name: null,
@@ -125,7 +126,8 @@ module.exports = {
         var installationMode = 'overwrite';
         if(fs.existsSync(installationDirectory)) { // If installation directory exists
             if(clean && ! lib.isDirectoryEmpty(installationDirectory)) { // If not empty
-                clog('The installation directory '+installationDirectory+' is not empty. Mum cannot guarantee a clean and safe installation unless the directory is empty.');
+                installationMode = 'wipe';
+                /*clog('The installation directory '+installationDirectory+' is not empty. Mum cannot guarantee a clean and safe installation unless the directory is empty.');
                 switch(readlineSync.keyInSelect(['Wipe (delete all existing contents)', 'Overwrite (leave existing contents in place)'], 'Choose an option:')) { // Then ask user if they want to wipe the directory _______
                     case 0:
                         installationMode = 'wipe';
@@ -139,10 +141,26 @@ module.exports = {
                     default:
                         clog('Cancelling installation.');
                         process.exit();
-                }
+                }*/
             }
 
-            if(readlineSync.keyInYN('Are you sure you want to '+installationMode+' and install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
+            if(this._installationConfirmed === true || readlineSync.keyInYN('Are you sure you want to install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
+                this._installationConfirmed = true;
+                // Ensure directory is created (recursive)
+                if(installationMode == 'wipe') {
+                    clog('Attempting to wipe the installation directory: '+installationDirectory);
+                    lib.wipeDirectory(installationDirectory);
+                    if(! lib.isDirectoryEmpty(installationDirectory)) { // If directory is still not empty
+                        clog('Directory is not empty. Failed to wipe the installation directory: '+installationDirectory);
+                        process.exit(1); // Then exit program
+                    }
+                }
+            } else {
+                clog('Cancelling installation.');
+                process.exit(1);
+            }
+
+            /*if(readlineSync.keyInYN('Are you sure you want to '+installationMode+' and install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
                 clog('Continuing with installation.');
                 if(installationMode == 'wipe') {
                     clog('Deleting all contents of: '+installationDirectory);
@@ -152,9 +170,10 @@ module.exports = {
             } else {
                 clog('Cancelling installation.');
                 process.exit(1);
-            }
+            }*/
         } else {
-            if(readlineSync.keyInYN('Are you sure you want to install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
+            if(this._installationConfirmed === true || readlineSync.keyInYN('Are you sure you want to install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
+                this._installationConfirmed = true;
                 clog('Attempting to create the installation directory: '+installationDirectory);
                 // Ensure directory is created (recursive)
                 mkdirp.sync(installationDirectory);
@@ -207,7 +226,7 @@ module.exports = {
     installFromDirectory: function(sourceDirectory, installationDirectory, clean) {
         var self = this;
 
-        clean = (typeof(clean) != 'undefined');
+        clean = (typeof(clean) == 'undefined') ? false : clean;
         sourceDirectory = path.resolve(sourceDirectory);
         installationDirectory = path.resolve(installationDirectory);
         this._validateSourceDirectory(sourceDirectory);
@@ -238,7 +257,7 @@ module.exports = {
 
         // run before install scripts
         var cwd = process.cwd();
-        process.chdir(installationDirectory);
+        process.chdir(sourceDirectory);
         mumc.install.scripts.before.forEach(function(scriptFile, index) {
             var scriptFile = self._resolve(sourceDirectory, scriptFile);
             // Force-set executable permissions on the target script file
@@ -263,7 +282,7 @@ module.exports = {
             }
 
             // sync source to destination
-            lib.overlayFilesRecursive(source, destination);
+            lib.overlayFilesRecursive(source, destination, true);
         });
 
         clog('Installed from '+sourceDirectory+' to '+installationDirectory);
@@ -278,13 +297,13 @@ module.exports = {
                     dep.installTo = installationDirectory+'/'+dep.installTo;
                 }
                 clog('Installing dependency from: ', dep.source, ' to ', dep.installTo);
-                self.install(dep.source, dep.installTo);
+                self.install(dep.source, dep.installTo, false);
             });
         }
 
         // run after install scripts
         cwd = process.cwd();
-        process.chdir(installationDirectory);
+        process.chdir(sourceDirectory);
         mumc.install.scripts.after.forEach(function(scriptFile, index) {
             var scriptFile = self._resolve(sourceDirectory, scriptFile);
             // Force-set executable permissions on the target script file
@@ -293,7 +312,7 @@ module.exports = {
         });
         process.chdir(cwd);
     },
-    installFromArchive: function(archiveFile, installationDirectory) {
+    installFromArchive: function(archiveFile, installationDirectory, clean) {
         archiveFile = path.resolve(archiveFile);
         installationDirectory = path.resolve(installationDirectory);
 
@@ -337,7 +356,7 @@ module.exports = {
                 sourceDirectory = cacheDirectory;
             }
 
-            self.installFromDirectory(sourceDirectory, installationDirectory);
+            self.installFromDirectory(sourceDirectory, installationDirectory, clean);
         }
 
         switch(archiveExtension.toLowerCase()) {
@@ -368,8 +387,7 @@ module.exports = {
         //
         // fs.createReadStream(archiveFile).on('error', handleExtractionError).pipe(extractor);
     },
-    installFromRepository: function(repositoryUrl, installationDirectory) {
-
+    installFromRepository: function(repositoryUrl, installationDirectory, clean) {
         // Handles version scenarios like >, <, >=, <=, =
         // Syntax is part of commit-ish like: #>=2.0.0
         // Will use node-semver to figure this out - probably will have to clone the repo first and get lists of all tags and branches to use for comparison in a loop
@@ -409,9 +427,9 @@ module.exports = {
 
         clog(''); // Empty line in the console for readability
 
-        this.installFromDirectory(cacheDirectory, installationDirectory);
+        this.installFromDirectory(cacheDirectory, installationDirectory, clean);
     },
-    install: function(source, target) {
+    install: function(source, target, clean) {
         var installType = '';
 
         //target = fs.realpathSync(target);
@@ -426,14 +444,15 @@ module.exports = {
                 installTo: target
             };
 
+            if(!fs.existsSync(this._baseLevelInstallationDirectory)) {
+                mkdirp.sync(this._baseLevelInstallationDirectory);
+            }
+
             fs.writeFileSync(this._baseLevelInstallationDirectory+'/../mumi.json', JSON.stringify(mumi));
         }
 
         try {
-            clog('checking for a directory or file: ', source);
-            //var tmpSource = fs.realpathSync(source);
             var stats = fs.statSync(source);
-            //clog(stats);
             if(stats.isDirectory()) {
                 installType = 'directory';
             } else if(stats.isFile()) {
@@ -446,19 +465,19 @@ module.exports = {
             installType = 'repository';
         }
 
-        clog('Install type: ', installType);
+        //clog('Install type: ', installType);
         switch(installType) {
             case 'directory':
                 // Try installing from that directory
-                this.installFromDirectory(source, target);
+                this.installFromDirectory(source, target, clean);
                 break;
             case 'file':
                 // Try installing from that file as if it were a .tar.gz or a .zip
-                this.installFromArchive(source, target);
+                this.installFromArchive(source, target, clean);
                 break;
             case 'repository':
                 // Try installing the source as if it were a repository URL
-                this.installFromRepository(source, target);
+                this.installFromRepository(source, target, clean);
                 break;
         }
     },
@@ -475,7 +494,7 @@ module.exports = {
         }
 
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
-        this.install(mumi.source, mumi.installTo);
+        this.install(mumi.source, mumi.installTo, false);
     },
     resetBaseLevelInstallationDirectory: function() {
         this._baseLevelInstallationDirectory = null;

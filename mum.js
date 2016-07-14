@@ -68,6 +68,10 @@ const commands = {
             // The base install path for the target repository
             name: 'installationDirectory',
             default: '.'
+        },
+        {
+            name: 'clean',
+            default: false
         }
     ],
     update: []
@@ -82,7 +86,14 @@ switch (command.name) {
         clog('Help docs are a work in progress.');
         break;
     case 'install':
-        util.install(command.args.source, command.args.installationDirectory);
+        // For readability, print a couple blank lines
+        clog('');
+        clog('');
+        var clean = (command.args.clean == 'clean');
+        if(clean === true) {
+            clog('-- RUNNING AS CLEAN INSTALL --');
+        }
+        util.install(command.args.source, command.args.installationDirectory, clean);
         util.resetBaseLevelInstallationDirectory();
         break;
     case 'update':

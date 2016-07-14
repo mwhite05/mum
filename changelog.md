@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.2.1-alpha
+
+* Added support for any installation to run a clean install (wipe directory contents before installing/updating).
+* Patched an issue where cancelling installation would allow installation to continue.
+* Updated the installation process so that you need answer yes to install only for the first installed resource. Dependencies install without prompting again.
+
 ### v0.2.0-alpha
 
 * New mum.json format

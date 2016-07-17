@@ -223,9 +223,20 @@ module.exports = {
         }
         return mumDirectory;
     },
-    installFromDirectory: function(sourceDirectory, installationDirectory, clean) {
+    installFromDirectory: function(sourceDirectory, installationDirectory, clean, o) {
         var self = this;
+        var baseLevel = false;
+        if(!(o instanceof Object)) {
+            baseLevel = true;
+            // o is essentially a flattened list of all mum.json configurations from the primary and dependent installation sources
+            o = {
+                before: [],
+                after: [],
+                maps: []
+            };
+        }
 
+        //baseProject = (typeof(baseProject) == 'undefined') ? false : baseProject;
         clean = (typeof(clean) == 'undefined') ? false : clean;
         sourceDirectory = path.resolve(sourceDirectory);
         installationDirectory = path.resolve(installationDirectory);
@@ -255,7 +266,13 @@ module.exports = {
             process.exit(1);
         }
 
-        // run before install scripts
+        // Add the before install scripts to the options
+        o.before.unshift({
+            directory: sourceDirectory,
+            scripts: mumc.install.scripts.before
+        });
+
+        /*// run before install scripts
         var cwd = process.cwd();
         process.chdir(sourceDirectory);
         mumc.install.scripts.before.forEach(function(scriptFile, index) {
@@ -264,55 +281,72 @@ module.exports = {
             clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
             clog(child_process.execSync('"'+scriptFile+'"').toString());
         });
-        process.chdir(cwd);
-
-        // loop over each item in the installMap
-        mumc.install.map.forEach(function(value, index) {
-            // resolve the path for source
-            var source = self._resolve(sourceDirectory, value.source);
-            // resolve the path for destination
-            var destination = self._resolve(installationDirectory, value.installTo);
-
-            // Verify source
-            self._validateSourceDirectory(source);
-
-            // Create destination if required
-            if(! fs.existsSync(destination)) {
-                mkdirp.sync(destination);
-            }
-
-            // sync source to destination
-            lib.overlayFilesRecursive(source, destination, true);
-        });
-
-        clog('Installed from '+sourceDirectory+' to '+installationDirectory);
-
-        clog('Checking for dependencies.');
+        process.chdir(cwd);*/
 
         if(mumc.dependencies.length) {
-            clog('Found dependencies.');
             mumc.dependencies.forEach(function(dependency, index) {
                 var dep = extend({}, self._defaultMumDependency, dependency);
                 if(dep.installTo[0] == '.') {
                     dep.installTo = installationDirectory+'/'+dep.installTo;
                 }
                 clog('Installing dependency from: ', dep.source, ' to ', dep.installTo);
-                self.install(dep.source, dep.installTo, false);
+                // Add returned options to an array of returned options for all dependencies
+                self.install(dep.source, dep.installTo, false, o);
+                /*// loop over the tmpO and merge with o
+                tmpO.before.forEach(function(value, index) {
+                    o.before.unshift(value);
+                });
+
+                tmpO.after.forEach(function(value, index) {
+                    o.after.push(value);
+                });*/
             });
         }
 
-        // run after install scripts
-        cwd = process.cwd();
-        process.chdir(sourceDirectory);
-        mumc.install.scripts.after.forEach(function(scriptFile, index) {
-            var scriptFile = self._resolve(sourceDirectory, scriptFile);
-            // Force-set executable permissions on the target script file
-            clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
-            clog(child_process.execSync('"'+scriptFile+'"').toString());
+        o.after.push({
+            directory: sourceDirectory,
+            scripts: mumc.install.scripts.after
         });
-        process.chdir(cwd);
+
+        // If there are no map items, use the source and installation directory as the map
+        if(!mumc.install.map.length) {
+            o.maps.unshift({
+                source: sourceDirectory,
+                installTo: installationDirectory
+            });
+        } else {
+            // loop over each item in the installMap
+            mumc.install.map.forEach(function(value, index) {
+                // resolve the path for source
+                var source = self._resolve(sourceDirectory, value.source);
+                // resolve the path for destination
+                var destination = self._resolve(installationDirectory, value.installTo);
+
+                // Verify source
+                self._validateSourceDirectory(source);
+
+                // Create destination if required
+                if(!fs.existsSync(destination)) {
+                    mkdirp.sync(destination);
+                }
+
+                // add this source and destination to the list of locations to sync
+                o.maps.push({
+                    source: source,
+                    installTo: destination
+                });
+            });
+        }
+
+        if(baseLevel) {
+            clog('using o for: '+sourceDirectory, o);
+            this._runSyncProcess(o);
+            return null;
+        }
+        clog('returning o for: '+sourceDirectory);
+        return o;
     },
-    installFromArchive: function(archiveFile, installationDirectory, clean) {
+    installFromArchive: function(archiveFile, installationDirectory, clean, o) {
         archiveFile = path.resolve(archiveFile);
         installationDirectory = path.resolve(installationDirectory);
 
@@ -356,7 +390,7 @@ module.exports = {
                 sourceDirectory = cacheDirectory;
             }
 
-            self.installFromDirectory(sourceDirectory, installationDirectory, clean);
+            self.installFromDirectory(sourceDirectory, installationDirectory, clean, o);
         }
 
         switch(archiveExtension.toLowerCase()) {
@@ -387,7 +421,7 @@ module.exports = {
         //
         // fs.createReadStream(archiveFile).on('error', handleExtractionError).pipe(extractor);
     },
-    installFromRepository: function(repositoryUrl, installationDirectory, clean) {
+    installFromRepository: function(repositoryUrl, installationDirectory, clean, o) {
         // Handles version scenarios like >, <, >=, <=, =
         // Syntax is part of commit-ish like: #>=2.0.0
         // Will use node-semver to figure this out - probably will have to clone the repo first and get lists of all tags and branches to use for comparison in a loop
@@ -427,9 +461,9 @@ module.exports = {
 
         clog(''); // Empty line in the console for readability
 
-        this.installFromDirectory(cacheDirectory, installationDirectory, clean);
+        this.installFromDirectory(cacheDirectory, installationDirectory, clean, o);
     },
-    install: function(source, target, clean) {
+    install: function(source, target, clean, o) {
         var installType = '';
 
         //target = fs.realpathSync(target);
@@ -469,17 +503,55 @@ module.exports = {
         switch(installType) {
             case 'directory':
                 // Try installing from that directory
-                this.installFromDirectory(source, target, clean);
+                this.installFromDirectory(source, target, clean, o);
                 break;
             case 'file':
                 // Try installing from that file as if it were a .tar.gz or a .zip
-                this.installFromArchive(source, target, clean);
+                this.installFromArchive(source, target, clean, o);
                 break;
             case 'repository':
                 // Try installing the source as if it were a repository URL
-                this.installFromRepository(source, target, clean);
+                this.installFromRepository(source, target, clean, o);
                 break;
         }
+    },
+    _runSyncProcess: function(o) {
+        var self = this;
+
+        // todo run all before install scripts in order base to last dependency
+        var cwd = process.cwd();
+        o.before.forEach(function(value, index) {
+            process.chdir(value.directory);
+            value.scripts.forEach(function(scriptFile, index) {
+                var scriptFile = self._resolve(value.directory, scriptFile);
+                // Force-set executable permissions on the target script file
+                clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+
+                // Run the script file as a command
+                clog(child_process.execSync('"'+scriptFile+'"').toString());
+            });
+        });
+        process.chdir(cwd);
+
+        // todo sync all source directory locations to their respective target locations
+        o.maps.forEach(function(value, index) {
+            // sync source to destination
+            lib.overlayFilesRecursive(value.source, value.installTo, true);
+        });
+
+        // todo run all after install scripts in order last dependency to base
+        o.after.forEach(function(value, index) {
+            process.chdir(value.directory);
+            value.scripts.forEach(function(scriptFile, index) {
+                var scriptFile = self._resolve(value.directory, scriptFile);
+                // Force-set executable permissions on the target script file
+                clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+
+                // Run the script file as a command
+                clog(child_process.execSync('"'+scriptFile+'"').toString());
+            });
+        });
+        process.chdir(cwd);
     },
     update: function() {
         if(!fs.existsSync('./mumi.json')) {
@@ -496,7 +568,7 @@ module.exports = {
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
         this.install(mumi.source, mumi.installTo, false);
     },
-    resetBaseLevelInstallationDirectory: function() {
+    reset: function() {
         this._baseLevelInstallationDirectory = null;
     }
 };

@@ -94,7 +94,7 @@ switch (command.name) {
             clog('-- RUNNING AS CLEAN INSTALL --');
         }
         util.install(command.args.source, command.args.installationDirectory, clean);
-        util.resetBaseLevelInstallationDirectory();
+        util.reset();
         break;
     case 'update':
         util.update();

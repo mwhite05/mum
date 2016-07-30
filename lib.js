@@ -218,6 +218,9 @@ module.exports = {
     clog: function () {
         var args = Array.prototype.slice.call(arguments);
         args.forEach(function (value, index) {
+            if(value instanceof Buffer) {
+                value = value.toString();
+            }
             console.log(value);
         });
     },
@@ -345,7 +348,6 @@ module.exports = {
         return fileName;
     },
 
-    // @todo change this to an "overlay" method for copying files from their git repo to their target directory
     overlayFilesRecursive: function (sourcePath, targetPath, overwrite) {
         var self = this;
         self.clog('Source path: ' + sourcePath);

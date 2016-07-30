@@ -15,6 +15,7 @@ const child_process = require('child_process');
 const lib = require('./lib.js');
 const util = require('./util.js');
 const clog = lib.clog;
+const permaclog = lib.clog;
 
 var packageConfigFilePath = __dirname+'/package.json';
 var packageConfig;
@@ -22,7 +23,7 @@ var packageConfig;
 try {
     packageConfig = JSON.parse(fs.readFileSync(packageConfigFilePath));
 } catch(e) {
-    clog('Your Modern Update Manager (mum) installation is corrupt.\nUnable to initialize your preferences file because we cannot read the '+packageConfigFilePath+' file.\nThat file should be part of the mum-x.y.z.tgz package file you downloaded.');
+    permaclog('Your Modern Update Manager (mum) installation is corrupt.\nUnable to initialize your preferences file because we cannot read the '+packageConfigFilePath+' file.\nThat file should be part of the mum-x.y.z.tgz package file you downloaded.');
     process.exit(0);
 }
 
@@ -41,7 +42,7 @@ var props = {
 props.appTmpPath = props.appDataPath+'/tmp';
 props.appPrefsPath = props.appDataPath+'/preferences.json';
 
-mkdirp.sync(props.appTmpPath); // initialize Evolve application data and tmp directories.
+mkdirp.sync(props.appTmpPath); // initialize Mum application data and tmp directories.
 lib.initializePreferences(props.appPrefsPath);
 props.preferences = lib.readPreferencesFromDisk(props.appPrefsPath);
 
@@ -74,7 +75,8 @@ const commands = {
             default: false
         }
     ],
-    update: []
+    update: [],
+    debug: []
 };
 
 // Parse the command line arguments/commands
@@ -91,12 +93,17 @@ switch (command.name) {
         clog('');
         var clean = (command.args.clean == 'clean');
         if(clean === true) {
-            clog('-- RUNNING AS CLEAN INSTALL --');
+            permaclog('-- RUNNING AS CLEAN INSTALL --');
         }
-        util.install(command.args.source, command.args.installationDirectory, clean);
-        util.reset();
+        util.install(command.args.source, command.args.installationDirectory, clean, null, function() {
+            // post-installation callback method
+            util.reset();
+        });
         break;
     case 'update':
         util.update();
+        break;
+    case 'debug':
+        util.runDebugOperations();
         break;
 }

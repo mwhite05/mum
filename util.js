@@ -13,6 +13,7 @@ const child_process = require('child_process');
 const readlineSync = require('readline-sync');
 //const cla = require('command-line-args');
 const clog = lib.clog;
+const permaclog = lib.clog;
 
 /* RULES:
         * Any variable named *Directory is a path to a directory.
@@ -63,7 +64,7 @@ module.exports = {
         // If the branch or tag is not present then it will return a fatal error and disconnect
         var cmd = 'git clone "' + repositoryUrl + '" "' + cloneTargetDirectory + '"';
 
-        clog(cmd);
+        permaclog(cmd);
 
         try {
             child_process.execSync(cmd);
@@ -77,7 +78,7 @@ module.exports = {
         // If the hash, branch or tag is not present then it will return a fatal error and disconnect
         var cmd = 'git checkout "' + commitIsh+'"';
 
-        clog(cmd);
+        permaclog(cmd);
 
         try {
             var cwd = process.cwd();
@@ -106,7 +107,7 @@ module.exports = {
             process.chdir(repositoryPath);
             // Run the commands
             cmds.forEach(function(cmd, index) {
-                clog(cmd);
+                permaclog(cmd);
                 child_process.execSync(cmd);
             });
             // Change directories back to the original working directory
@@ -131,15 +132,15 @@ module.exports = {
                 switch(readlineSync.keyInSelect(['Wipe (delete all existing contents)', 'Overwrite (leave existing contents in place)'], 'Choose an option:')) { // Then ask user if they want to wipe the directory _______
                     case 0:
                         installationMode = 'wipe';
-                        clog('Installation will delete the contents of: '+installationDirectory);
+                        permaclog('Installation will delete the contents of: '+installationDirectory);
                     break;
                     case 1:
                         installationMode = 'overwrite';
-                        clog('Installation will overwrite the non-empty directory: '+installationDirectory);
+                        permaclog('Installation will overwrite the non-empty directory: '+installationDirectory);
                     break;
                     case -1:
                     default:
-                        clog('Cancelling installation.');
+                        permaclog('Cancelling installation.');
                         process.exit();
                 }*/
             }
@@ -148,41 +149,41 @@ module.exports = {
                 this._installationConfirmed = true;
                 // Ensure directory is created (recursive)
                 if(installationMode == 'wipe') {
-                    clog('Attempting to wipe the installation directory: '+installationDirectory);
+                    permaclog('Attempting to wipe the installation directory: '+installationDirectory);
                     lib.wipeDirectory(installationDirectory);
                     if(! lib.isDirectoryEmpty(installationDirectory)) { // If directory is still not empty
-                        clog('Directory is not empty. Failed to wipe the installation directory: '+installationDirectory);
+                        permaclog('Directory is not empty. Failed to wipe the installation directory: '+installationDirectory);
                         process.exit(1); // Then exit program
                     }
                 }
             } else {
-                clog('Cancelling installation.');
+                permaclog('Cancelling installation.');
                 process.exit(1);
             }
 
             /*if(readlineSync.keyInYN('Are you sure you want to '+installationMode+' and install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
-                clog('Continuing with installation.');
+                permaclog('Continuing with installation.');
                 if(installationMode == 'wipe') {
-                    clog('Deleting all contents of: '+installationDirectory);
+                    permaclog('Deleting all contents of: '+installationDirectory);
                     lib.wipeDirectory(installationDirectory);
                 }
                 return;
             } else {
-                clog('Cancelling installation.');
+                permaclog('Cancelling installation.');
                 process.exit(1);
             }*/
         } else {
             if(this._installationConfirmed === true || readlineSync.keyInYN('Are you sure you want to install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
                 this._installationConfirmed = true;
-                clog('Attempting to create the installation directory: '+installationDirectory);
+                permaclog('Attempting to create the installation directory: '+installationDirectory);
                 // Ensure directory is created (recursive)
                 mkdirp.sync(installationDirectory);
                 if(! fs.existsSync(installationDirectory)) { // If directory fails to create
-                    clog('Failed to created the installation directory: '+installationDirectory);
+                    permaclog('Failed to created the installation directory: '+installationDirectory);
                     process.exit(1); // Then exit program
                 }
             } else {
-                clog('Cancelling installation. Directory creation skipped so installation directory does not exist.');
+                permaclog('Cancelling installation. Directory creation skipped so installation directory does not exist.');
                 process.exit(1); // Exit program
             }
         }
@@ -203,7 +204,7 @@ module.exports = {
     },
     _validateSourceDirectory: function(directory) {
         if(! fs.existsSync(directory)) {
-            clog('The source directory could not be found: '+directory);
+            permaclog('The source directory could not be found: '+directory);
             process.exit(1);
         }
     },
@@ -223,7 +224,7 @@ module.exports = {
         }
         return mumDirectory;
     },
-    installFromDirectory: function(sourceDirectory, installationDirectory, clean, o) {
+    installFromDirectory: function(sourceDirectory, installationDirectory, clean, o, callback) {
         var self = this;
         var baseLevel = false;
         if(!(o instanceof Object)) {
@@ -247,22 +248,22 @@ module.exports = {
 
         // Perform all configuration verification steps necessary
         if(! lib.isArray(mumc.install.map)) {
-            clog('Invalid mum.json configuration : The install.map property must be an array<object>{source:<string>, destination:<string>}.');
+            permaclog('Invalid mum.json configuration : The install.map property must be an array<object>{source:<string>, destination:<string>}.');
             process.exit(1);
         }
 
         if(! lib.isObject(mumc.install.scripts)) {
-            clog('Invalid mum.json configuration : The install.scripts property must be an <object>{before:<array><string>, after:<array><string>}.');
+            permaclog('Invalid mum.json configuration : The install.scripts property must be an <object>{before:<array><string>, after:<array><string>}.');
             process.exit(1);
         }
 
         if(! lib.isArray(mumc.install.scripts.before)) {
-            clog('Invalid mum.json configuration : The install.scripts.before property must be an array<string>.');
+            permaclog('Invalid mum.json configuration : The install.scripts.before property must be an array<string>.');
             process.exit(1);
         }
 
         if(! lib.isArray(mumc.install.scripts.after)) {
-            clog('Invalid mum.json configuration : The install.scripts.after property must be an array<string>.');
+            permaclog('Invalid mum.json configuration : The install.scripts.after property must be an array<string>.');
             process.exit(1);
         }
 
@@ -278,8 +279,8 @@ module.exports = {
         mumc.install.scripts.before.forEach(function(scriptFile, index) {
             var scriptFile = self._resolve(sourceDirectory, scriptFile);
             // Force-set executable permissions on the target script file
-            clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
-            clog(child_process.execSync('"'+scriptFile+'"').toString());
+            permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+            permaclog(child_process.execSync('"'+scriptFile+'"').toString());
         });
         process.chdir(cwd);*/
 
@@ -289,7 +290,6 @@ module.exports = {
                 if(dep.installTo[0] == '.') {
                     dep.installTo = installationDirectory+'/'+dep.installTo;
                 }
-                clog('Installing dependency from: ', dep.source, ' to ', dep.installTo);
                 // Add returned options to an array of returned options for all dependencies
                 self.install(dep.source, dep.installTo, false, o);
                 /*// loop over the tmpO and merge with o
@@ -339,14 +339,17 @@ module.exports = {
         }
 
         if(baseLevel) {
-            clog('using o for: '+sourceDirectory, o);
             this._runSyncProcess(o);
             return null;
         }
-        clog('returning o for: '+sourceDirectory);
+
+        if(callback instanceof Function) {
+            callback();
+        }
+
         return o;
     },
-    installFromArchive: function(archiveFile, installationDirectory, clean, o) {
+    installFromArchive: function(archiveFile, installationDirectory, clean, o, callback) {
         archiveFile = path.resolve(archiveFile);
         installationDirectory = path.resolve(installationDirectory);
 
@@ -354,11 +357,20 @@ module.exports = {
 
         var cacheDirectory = this._getMumCacheDirectory(installationDirectory) + '/' + path.basename(archiveFile);
 
+        if(this._disableSourceUpdates === true && fs.existsSync(cacheDirectory)) {
+            var files = fs.readdirSync(cacheDirectory);
+            if(files.length > 3) { // there will always be . and .. files listed
+                clog('SKIPPING ARCHIVE EXTRACTION - SOURCE UPDATES DISABLED');
+                afterExtraction(); // jump straight to the after extraction process to skip the update
+                return;
+            }
+        }
+
         var self = this;
 
         function handleExtractionError(error) {
-            clog(error);
-            clog('Could not extract the archive: '+archiveFile);
+            permaclog(error);
+            permaclog('Could not extract the archive: '+archiveFile);
             process.exit(1);
         }
 
@@ -390,7 +402,7 @@ module.exports = {
                 sourceDirectory = cacheDirectory;
             }
 
-            self.installFromDirectory(sourceDirectory, installationDirectory, clean, o);
+            self.installFromDirectory(sourceDirectory, installationDirectory, clean, o, callback);
         }
 
         switch(archiveExtension.toLowerCase()) {
@@ -411,7 +423,7 @@ module.exports = {
                 fs.createReadStream(archiveFile).pipe(unzip.Extract({path: cacheDirectory})).on('error', handleExtractionError).on('close', afterExtraction);
                 break;
             default:
-                clog('Unknown archive file type: '+archiveExtension);
+                permaclog('Unknown archive file type: '+archiveExtension);
         }
 
         // DID NOT WORK for .tgz / .tar.gz file (tar   [node-tar])
@@ -421,7 +433,8 @@ module.exports = {
         //
         // fs.createReadStream(archiveFile).on('error', handleExtractionError).pipe(extractor);
     },
-    installFromRepository: function(repositoryUrl, installationDirectory, clean, o) {
+    _disableSourceUpdates: false,
+    installFromRepository: function(repositoryUrl, installationDirectory, clean, o, callback) {
         // Handles version scenarios like >, <, >=, <=, =
         // Syntax is part of commit-ish like: #>=2.0.0
         // Will use node-semver to figure this out - probably will have to clone the repo first and get lists of all tags and branches to use for comparison in a loop
@@ -439,7 +452,7 @@ module.exports = {
         if(!fs.existsSync(cacheDirectory)) {
             //lib.wipeDirectory(cacheDirectory);
             if(! mkdirp.sync(cacheDirectory)) {
-                clog('Could not create clone target directory: '+cacheDirectory);
+                permaclog('Could not create clone target directory: '+cacheDirectory);
                 process.exit(1);
             }
         }
@@ -447,30 +460,44 @@ module.exports = {
         // Check for a git repository inside the target directory
         if(fs.existsSync(cacheDirectory+'/.git')) {
             // Try updating the existing repository clone
-            this._updateLocalRepository(cacheDirectory, commitIsh);
+            if(this._disableSourceUpdates !== true) {
+                this._updateLocalRepository(cacheDirectory, commitIsh);
+            } else {
+                clog('SKIPPING REPOSITORY UPDATE - SOURCE UPDATES DISABLED');
+            }
         } else {
             // Try cloning the target repository
             if(!this._cloneRepository(repositoryUrl, cacheDirectory)) {
-                clog('Could not clone repository: ' + repositoryUrl);
+                permaclog('Could not clone repository: ' + repositoryUrl);
                 process.exit(1);
             }
         }
 
-        // Attempt to check out the target commitIsh
-        this._checkOutCommitIsh(cacheDirectory, commitIsh);
+        if(this._disableSourceUpdates !== true) {
+            // Attempt to check out the target commitIsh
+            this._checkOutCommitIsh(cacheDirectory, commitIsh);
+        } else {
+            clog('SKIPPING REPOSITORY CHECKOUT - SOURCE UPDATES DISABLED');
+        }
 
-        clog(''); // Empty line in the console for readability
+        permaclog(''); // Empty line in the console for readability
 
-        this.installFromDirectory(cacheDirectory, installationDirectory, clean, o);
+        this.installFromDirectory(cacheDirectory, installationDirectory, clean, o, callback);
     },
-    install: function(source, target, clean, o) {
+    install: function(source, target, clean, o, callback) {
         var installType = '';
 
         //target = fs.realpathSync(target);
 
-        // @todo - set this new property from other entry points - also set via a method so that it only gets set once per reset
+        // @todo - set this new property from other entry points if needed - also set via a method so that it only gets set once per reset
         if(this._baseLevelInstallationDirectory === null) {
-            this._baseLevelInstallationDirectory = target.replace(/\/+$/);
+            if(!fs.existsSync(target)) {
+                mkdirp.sync(target);
+            }
+
+            target = fs.realpathSync(target);
+
+            this._baseLevelInstallationDirectory = target; //target.replace(/\/+$/);
 
             // Write the mumi.json file
             var mumi = {
@@ -482,7 +509,16 @@ module.exports = {
                 mkdirp.sync(this._baseLevelInstallationDirectory);
             }
 
+            permaclog('Base Level Install Dir: '+ this._baseLevelInstallationDirectory);
+            permaclog('Mumi.json location: '+ this._baseLevelInstallationDirectory+'/../mumi.json');
+
             fs.writeFileSync(this._baseLevelInstallationDirectory+'/../mumi.json', JSON.stringify(mumi));
+
+            var mumCacheDir = this._baseLevelInstallationDirectory+'/../.mum';
+            if(!fs.existsSync(mumCacheDir)) {
+                mkdirp.sync(mumCacheDir);
+            }
+            fs.writeFileSync(mumCacheDir+'/install_to', mumi.installTo);
         }
 
         try {
@@ -492,7 +528,7 @@ module.exports = {
             } else if(stats.isFile()) {
                 installType = 'file';
             } else if(stats.isSymbolicLink()) {
-                clog('Mum does not currently support installing from symbolic links.');
+                permaclog('Mum does not currently support installing from symbolic links.');
                 process.exit(1);
             }
         } catch(e) {
@@ -503,65 +539,103 @@ module.exports = {
         switch(installType) {
             case 'directory':
                 // Try installing from that directory
-                this.installFromDirectory(source, target, clean, o);
+                this.installFromDirectory(source, target, clean, o, callback);
                 break;
             case 'file':
                 // Try installing from that file as if it were a .tar.gz or a .zip
-                this.installFromArchive(source, target, clean, o);
+                this.installFromArchive(source, target, clean, o, callback);
                 break;
             case 'repository':
                 // Try installing the source as if it were a repository URL
-                this.installFromRepository(source, target, clean, o);
+                this.installFromRepository(source, target, clean, o, callback);
                 break;
         }
     },
     _runSyncProcess: function(o) {
         var self = this;
 
-        // todo run all before install scripts in order base to last dependency
+        var errorRegex = new RegExp('ERROR([\s]+)?$', 'gi');
+
         var cwd = process.cwd();
         o.before.forEach(function(value, index) {
             process.chdir(value.directory);
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
                 // Force-set executable permissions on the target script file
-                clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+                permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
 
-                // Run the script file as a command
-                clog(child_process.execSync('"'+scriptFile+'"').toString());
+                try {
+                    // Run the script file as a command
+                    var output = child_process.execSync('"' + scriptFile + '"').toString();
+                    permaclog(output);
+
+                    if(errorRegex.test(output)) {
+                        process.exit(1); // Error!
+                    }
+                } catch (e) {
+                    clog(e.stdout);
+                    clog(e.message);
+                    process.exit(1);
+                }
             });
         });
         process.chdir(cwd);
 
-        // todo sync all source directory locations to their respective target locations
         o.maps.forEach(function(value, index) {
             // sync source to destination
             lib.overlayFilesRecursive(value.source, value.installTo, true);
         });
 
-        // todo run all after install scripts in order last dependency to base
         o.after.forEach(function(value, index) {
             process.chdir(value.directory);
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
                 // Force-set executable permissions on the target script file
-                clog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+                permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
 
-                // Run the script file as a command
-                clog(child_process.execSync('"'+scriptFile+'"').toString());
+                try {
+                    // Run the script file as a command
+                    var output = child_process.execSync('"' + scriptFile + '"').toString();
+                    permaclog(output);
+
+                    if(errorRegex.test(output)) {
+                        process.exit(1); // Error!
+                    }
+                } catch (e) {
+                    clog(e.stdout);
+                    clog(e.message);
+                    process.exit(1);
+                }
             });
         });
         process.chdir(cwd);
     },
     update: function() {
         if(!fs.existsSync('./mumi.json')) {
-            clog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
+            permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
             process.exit(1);
         }
 
         var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
         if(!lib.isObject(mumi)) {
-            clog('Unable to update. mumi.json contents are not a valid JSON object.');
+            permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
+            process.exit(1);
+        }
+
+        // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
+        this.install(mumi.source, mumi.installTo, false);
+    },
+    runDebugOperations: function() {
+        this._disableSourceUpdates = true; // Disable source updates for current debugging operations
+
+        if(!fs.existsSync('./mumi.json')) {
+            permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
+            process.exit(1);
+        }
+
+        var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
+        if(!lib.isObject(mumi)) {
+            permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
             process.exit(1);
         }
 

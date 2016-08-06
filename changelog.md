@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.2.3-alpha
+
+* CAUTION: Changed the .before and .after scripts properties to .beforeInstall and .afterInstall
+* Added two new scripts properties: beforeSync and afterSync.
+
 ### v0.2.2-alpha
 
 * Significant improvements to the installation process to process pre and post installs in a more intelligent order

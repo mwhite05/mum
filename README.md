@@ -1,6 +1,6 @@
 # mum
 
-Currently on version: `0.2.0-alpha`
+Currently on version: `0.2.3-alpha`
 
 Modern Update Manager (for git only at this time)
 

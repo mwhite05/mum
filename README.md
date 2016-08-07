@@ -1,8 +1,60 @@
 # mum
 
-Currently on version: `0.2.3-alpha`
+`mum` is short for **M**odern **U**pdate **M**anager
 
-Modern Update Manager (for git only at this time)
+Currently on version: `0.2.4-alpha`
+
+---
+
+#### What is mum?
+
+`mum` is a deployment system for software **you** write.
+
+It's primary benefit is being able to deploy directly from any number of private or
+public git repositories at specific hashes/branches/tags as required, though
+installation from a source directory or tar/zip file is also supported.
+
+The rest of this document presumes you care about consistent and efficient installation
+of software to multiple target servers such as multiple dev servers, qa, staging, live,
+many machines in an office, etc.
+
+#### Who should use mum to deploy things?
+ 
+The primary target for `mum` is _web applications developers_ who would like to reduce
+the tedium of installing their software to a server instance.
+
+Note: The target currently is *nix (mainly Linux) servers.
+
+#### But there are already lots of package managers...
+
+Yes, there certainly are. `apt`, `yum`, `npm`, `ruby gems`, `composer`, `pip`, `gopm`
+to name a few.
+
+`mum` is _not_ trying to replace them. It is trying to give you a one-stop shop for
+deployment of complex systems that often require many packages be installed.
+
+Even _simple_ websites using Wordpress may require many Apache and PHP packages to be
+installed. Then you need code from at least two repositories (Wordpress and your
+custom site code) or one or two tar/zip files to get the site installed.
+
+Then you need to ensure all the right Apache and PHP modules are actually enabled and
+after that you'll need to configure the Apache virtual host.
+
+What if you could turn all of that tedious setup into a single command? If you want to
+see how, keep reading.
+
+## [Project Goals](id:project-goals)
+
+* Provide an deployment (installation _and_ update) system that can run on *nix.
+* Software language independence. Use the same tool to install and update from any repository you can access.
+* Scriptable. Make custom things happen at specific times before or after deployment.
+* Support nested / recursive dependencies.
+* Be as fast / efficient as practical (e.g. only clone on initial install, use fetch/pull for updates.)
+
+<br>
+
+**Future**
+* Operate quickly using concurrency where possible. (e.g. clone from multiple repositories at once)
 
 ---
 
@@ -298,16 +350,6 @@ The overarching goal for mum is to provide a single interface with a clean and e
 
 Please be aware that this does **not** mean mum is written in all languages. Mum will remain as a nodeJS package that is capable of installing from git repositories and running commands that can leverage any other package manager or script you need to use for deployment.
 
----
-
-## [Project Goals](id:project-goals)
-
-* Provide an update manager that can run on *nix and Windows.
-* Language independence. Use the same install tool and update manager for any repository you can access.
-* Triggers. React to installation and update triggers within your own software packages.
-* ~Support recursive dependencies with cyclic dependency prevention.~
-* ~Support conflict detection in dependency resolution.~
-* ~Operate quickly using concurrency where possible. (e.g. clone from multiple repositories at once)~
 
 ---
 

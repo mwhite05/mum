@@ -604,9 +604,10 @@ module.exports = {
 
         var cwd = process.cwd();
         o.beforeInstall.forEach(function(value, index) {
-            process.chdir(value.directory);
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
+                var scriptDir = path.dirname(scriptFile);
+                process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
                 permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
 
@@ -628,9 +629,10 @@ module.exports = {
         });
 
         o.beforeSync.forEach(function(value, index) {
-            process.chdir(value.directory);
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
+                var scriptDir = path.dirname(scriptFile);
+                process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
                 permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
 
@@ -658,9 +660,10 @@ module.exports = {
         });
 
         o.afterSync.forEach(function(value, index) {
-            process.chdir(value.directory);
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
+                var scriptDir = path.dirname(scriptFile);
+                process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
                 permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
 
@@ -682,9 +685,10 @@ module.exports = {
         });
 
         o.afterInstall.forEach(function(value, index) {
-            process.chdir(value.directory);
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
+                var scriptDir = path.dirname(scriptFile);
+                process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
                 permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
 

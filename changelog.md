@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.2.4-alpha.1
+
+* Patched an issue where mum update failed due to the file permissions being changed on files inside the mum cache of the repository.
+
 ### v0.2.4-alpha
 
 * Added support for a custom file excludes list for each entry in the install map.

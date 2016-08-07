@@ -102,6 +102,7 @@ module.exports = {
     _updateLocalRepository: function(repositoryPath, commitIsh) {
         // If the hash, branch or tag is not present then it will return a fatal error and disconnect
         var cmds = [];
+        cmds.push('git reset --hard');
         cmds.push('git fetch');
         cmds.push('git checkout "' + commitIsh+'"');
         cmds.push('git pull');

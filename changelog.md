@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.2.5-alpha
+
+* Added a clean option for updates.
+
 ### v0.2.4-alpha.2
 
 * Patched an issue where the directory used for running the installation scripts was incorrect.

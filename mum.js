@@ -75,7 +75,12 @@ const commands = {
             default: false
         }
     ],
-    update: [],
+    update: [
+        {
+            name: 'clean',
+            default: false
+        }
+    ],
     debug: []
 };
 
@@ -101,7 +106,11 @@ switch (command.name) {
         });
         break;
     case 'update':
-        util.update();
+        var clean = (command.args.clean == 'clean');
+        if(clean === true) {
+            permaclog('-- RUNNING AS CLEAN UPDATE --');
+        }
+        util.update(clean);
         break;
     case 'debug':
         util.runDebugOperations();

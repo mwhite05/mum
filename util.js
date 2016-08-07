@@ -710,7 +710,7 @@ module.exports = {
         });
         process.chdir(cwd);
     },
-    update: function() {
+    update: function(clean) {
         if(!fs.existsSync('./mumi.json')) {
             permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
             process.exit(1);
@@ -723,7 +723,7 @@ module.exports = {
         }
 
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
-        this.install(mumi.source, mumi.installTo, false);
+        this.install(mumi.source, mumi.installTo, clean);
     },
     runDebugOperations: function() {
         this._disableSourceUpdates = true; // Disable source updates for current debugging operations

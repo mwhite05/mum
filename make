@@ -17,6 +17,7 @@ exec($command.' 2>&1', $output, $exitCode);
 // Move the package file to the published/ directory (from which we upload to the web server)
 $packageFileName = trim(implode('', $output));
 exec('mv '.$packageFileName.' published/', $output, $exitCode);
+copy('published/'.$packageFileName, 'published/mum.tgz');
 echo $packageFileName.' published.'.PHP_EOL;
 
 echo "When you're ready to post this version live, run: npm publish".PHP_EOL;

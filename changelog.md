@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.2.4-alpha
+
+* Added support for a custom file excludes list for each entry in the install map.
+
 ### v0.2.3-alpha
 
 * CAUTION: Changed the .before and .after scripts properties to .beforeInstall and .afterInstall

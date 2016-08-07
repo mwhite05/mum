@@ -40,7 +40,8 @@ module.exports = {
                 beforeSync: [],
                 afterSync: [],
                 afterInstall: []
-            }
+            },
+            excludes: []
         },
         update: {
             scripts: {
@@ -354,7 +355,8 @@ module.exports = {
         if(!mumc.install.map.length) {
             o.maps.unshift({
                 source: sourceDirectory,
-                installTo: installationDirectory
+                installTo: installationDirectory,
+                exclude: []
             });
         } else {
             // loop over each item in the installMap
@@ -375,7 +377,8 @@ module.exports = {
                 // add this source and destination to the list of locations to sync
                 o.maps.push({
                     source: source,
-                    installTo: destination
+                    installTo: destination,
+                    excludes: value.excludes
                 });
             });
         }
@@ -650,7 +653,7 @@ module.exports = {
 
         o.maps.forEach(function(value, index) {
             // sync source to destination
-            lib.overlayFilesRecursive(value.source, value.installTo, true);
+            lib.overlayFilesRecursive(value.source, value.installTo, value.excludes, true);
         });
 
         o.afterSync.forEach(function(value, index) {

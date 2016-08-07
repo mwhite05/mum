@@ -348,7 +348,7 @@ module.exports = {
         return fileName;
     },
 
-    overlayFilesRecursive: function (sourcePath, targetPath, overwrite) {
+    overlayFilesRecursive: function (sourcePath, targetPath, excludes, overwrite) {
         var self = this;
         self.clog('Source path: ' + sourcePath);
         self.clog('Target path: ' + targetPath);
@@ -367,7 +367,11 @@ module.exports = {
 
         self.clog('Overlaying: ' + sourcePath + ' onto: ' + targetPath);
 
-        var excludes = [];
+        if(!(excludes instanceof Array)) {
+            excludes = [];
+        }
+
+        // Always exclude these files
         excludes.push('.git');
         excludes.push('.gitignore');
         excludes.push('.placeholder');

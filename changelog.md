@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.2.5-alpha.1
+
+* Patched an issue where using relative paths starting with ./ for excludes would break the process because rsync doesn't allow exclude paths to start with ./
+
 ### v0.2.5-alpha
 
 * Added a clean option for updates.

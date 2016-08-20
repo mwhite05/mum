@@ -606,7 +606,9 @@ module.exports = {
         o.beforeInstall.forEach(function(value, index) {
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
+                permaclog('Setting permissions on and attempting to run: '+scriptFile);
                 var scriptDir = path.dirname(scriptFile);
+                permaclog('Switching directories to: '+scriptDir);
                 process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
                 permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
@@ -631,7 +633,9 @@ module.exports = {
         o.beforeSync.forEach(function(value, index) {
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
+                permaclog('Setting permissions on and attempting to run: '+scriptFile);
                 var scriptDir = path.dirname(scriptFile);
+                permaclog('Switching directories to: '+scriptDir);
                 process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
                 permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
@@ -662,7 +666,9 @@ module.exports = {
         o.afterSync.forEach(function(value, index) {
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
+                permaclog('Setting permissions on and attempting to run: '+scriptFile);
                 var scriptDir = path.dirname(scriptFile);
+                permaclog('Switching directories to: '+scriptDir);
                 process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
                 permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
@@ -687,7 +693,9 @@ module.exports = {
         o.afterInstall.forEach(function(value, index) {
             value.scripts.forEach(function(scriptFile, index) {
                 var scriptFile = self._resolve(value.directory, scriptFile);
+                permaclog('Setting permissions on and attempting to run: '+scriptFile);
                 var scriptDir = path.dirname(scriptFile);
+                permaclog('Switching directories to: '+scriptDir);
                 process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
                 permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());

@@ -371,6 +371,10 @@ module.exports = {
             excludes = [];
         }
 
+        excludes.forEach(function(value, index) {
+            excludes[index] = value.replace(/^\.\//, '');
+        });
+
         // Always exclude these files
         excludes.push('.git');
         excludes.push('.gitignore');

@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.2.5-alpha.2
+
+* Updated the readme document.
+* Added the ability to specify an `install.scripts` key without defining an `install.map` key.
+
 ### v0.2.5-alpha.1
 
 * Patched an issue where using relative paths starting with ./ for excludes would break the process because rsync doesn't allow exclude paths to start with ./

@@ -255,6 +255,11 @@ module.exports = {
         var mumc = this._readMumJson(sourceDirectory+'/mum.json');
 
         // Perform all configuration verification steps necessary
+        if(typeof(mumc.install.map) == 'undefined') {
+            // Use the default map if none was defined in the configuration.
+            mumc.install.map = this._defaultMumConfig.install.map;
+        }
+
         if(! lib.isArray(mumc.install.map)) {
             permaclog('Invalid mum.json configuration : The install.map property must be an array<object>{source:<string>, destination:<string>}.');
             process.exit(1);

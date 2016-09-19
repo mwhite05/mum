@@ -196,19 +196,15 @@ module.exports = {
         }
     },
     _readMumJson: function(file) {
-        clog('_readMumJson: '+file);
         if(! fs.existsSync(file)) {
-            clog('file not found');
             return extend({}, this._defaultMumConfig);
         }
 
         var mumc = JSON.parse(fs.readFileSync(file));
         if(! lib.isObject(mumc)) {
-            clog('read config!');
             return extend({}, this._defaultMumConfig);
         }
 
-        clog('config corrupt');
         mumc = extend({}, this._defaultMumConfig, mumc);
 
         return mumc;

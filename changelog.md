@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.6-alpha.1
+* Removed some debug statements. Updated the readme file to the correct current version number.
+
 ### v0.2.6-alpha
 * Added the ability to specify a name property in the mum.json configuration file. When set this name will be used to create a symlink to that repository's cache directory that has a hash for a name.
 

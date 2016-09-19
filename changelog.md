@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.6-alpha.2
+* Patched an issue that caused the deployment to fail if a repository cache location symlink already existed.
+
 ### v0.2.6-alpha.1
 * Removed some debug statements. Updated the readme file to the correct current version number.
 

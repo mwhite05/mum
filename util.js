@@ -541,15 +541,18 @@ module.exports = {
 
             var cacheDirectorySymlink = this._getMumCacheDirectory(installationDirectory)+'/'+tmpMumc.name;
 
-            var cmd = 'ln -s "'+cacheDirectory+'" "'+cacheDirectorySymlink+'"';
+            if(!fs.existsSync(cacheDirectorySymlink)) {
 
-            permaclog('Creating repository symlink: '+cacheDirectorySymlink+' to '+cacheDirectory);
-            permaclog(cmd);
+                var cmd = 'ln -s "' + cacheDirectory + '" "' + cacheDirectorySymlink + '"';
 
-            try {
-                child_process.execSync(cmd);
-            } catch(e) {
-                return false;
+                permaclog('Creating repository symlink: ' + cacheDirectorySymlink + ' to ' + cacheDirectory);
+                permaclog(cmd);
+
+                try {
+                    child_process.execSync(cmd);
+                } catch(e) {
+                    permaclog('Failed to create repository symlink: ' + cacheDirectorySymlink + ' to ' + cacheDirectory);
+                }
             }
         }
 

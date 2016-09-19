@@ -99,6 +99,9 @@ switch (command.name) {
         var clean = (command.args.clean == 'clean');
         if(clean === true) {
             permaclog('-- RUNNING AS CLEAN INSTALL --');
+            permaclog('');
+            permaclog('');
+            permaclog('');
         }
         util.install(command.args.source, command.args.installationDirectory, clean, null, function() {
             // post-installation callback method

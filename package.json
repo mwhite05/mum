@@ -1,6 +1,6 @@
 {
   "name": "mum",
-  "version": "0.2.6-alpha.1",
+  "version": "0.2.6-alpha.2",
   "description": "Modern Update Manager for nearly any project that needs to be deployed or distributed.",
   "main": "mum.js",
   "bin": {

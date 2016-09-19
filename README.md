@@ -2,7 +2,7 @@
 
 `mum` is short for **M**odern **U**pdate **M**anager
 
-Currently on version: `0.2.6-alpha.1`
+Currently on version: `0.2.6-alpha.2`
 
 ---
 

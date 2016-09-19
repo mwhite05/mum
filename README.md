@@ -238,6 +238,30 @@ You can have multiple dependencies:
 
 <h4 id="install-scripts">Install Scripts</h4>
 
+If you want to more easily access the mum cache directory for a specific repository you can provide a name for your repository.
+
+When this is provided, mum will create a symlink by that name pointing to the directory containing the local repository clone. If two repositories in the dependency chain have the same name then the behavior is not defined so just be sure that does not happen.
+
+If we named the repository in the above configuration example it might look like this:
+
+```
+{
+    "name": "my-project",
+    "dependencies": [
+        {
+            "source": "git@github.com:WordPress/WordPress.git#4.6",
+            "installTo": "./"
+        },
+        {
+            "source": "git@github.com:mwhite05/mum-example.git#basic",
+            "installTo": "./examples"
+        }
+    ]
+}
+```
+
+<h4 id="install-scripts">Install Scripts</h4>
+
 You can configure mum to run scripts before and after installation. A script is any executable file (compiled binary executable files work too).
 
 These scripts run as the same user you run `mum install` or `mum update` with (often root) so they can be very powerful.

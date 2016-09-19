@@ -24,6 +24,7 @@ const permaclog = lib.clog;
 */
 
 module.exports = {
+    _disableSourceUpdates: false,
     _installationConfirmed: false,
     _baseLevelInstallationDirectory: null,
     _defaultMumConfig: {
@@ -195,15 +196,19 @@ module.exports = {
         }
     },
     _readMumJson: function(file) {
+        clog('_readMumJson: '+file);
         if(! fs.existsSync(file)) {
+            clog('file not found');
             return extend({}, this._defaultMumConfig);
         }
 
         var mumc = JSON.parse(fs.readFileSync(file));
         if(! lib.isObject(mumc)) {
+            clog('read config!');
             return extend({}, this._defaultMumConfig);
         }
 
+        clog('config corrupt');
         mumc = extend({}, this._defaultMumConfig, mumc);
 
         return mumc;
@@ -484,12 +489,10 @@ module.exports = {
         //
         // fs.createReadStream(archiveFile).on('error', handleExtractionError).pipe(extractor);
     },
-    _disableSourceUpdates: false,
     installFromRepository: function(repositoryUrl, installationDirectory, clean, o, callback) {
-        // Handles version scenarios like >, <, >=, <=, =
-        // Syntax is part of commit-ish like: #>=2.0.0
-        // Will use node-semver to figure this out - probably will have to clone the repo first and get lists of all tags and branches to use for comparison in a loop
-        // Clone of initial repository should be to specific (known) location so that the directory name does not conflict with that of any named dependencies
+        // todo Handles version scenarios like >, <, >=, <=, =
+        // todo Syntax is part of commit-ish like: #>=2.0.0
+        // todo Will use node-semver to figure this out - probably will have to clone the repo first and get lists of all tags and branches to use for comparison in a loop
 
         // Separate the commit-ish from the repository URL
         var repositoryUrlParts = URL.parse(repositoryUrl);
@@ -529,6 +532,29 @@ module.exports = {
             this._checkOutCommitIsh(cacheDirectory, commitIsh);
         } else {
             permaclog('SKIPPING REPOSITORY CHECKOUT - SOURCE UPDATES DISABLED');
+        }
+
+        // Clone succeeded
+        var tmpMumConfigFile = cacheDirectory+'/mum.json';
+        // Try to read the mum.json file in the cloned repository to get the name property from it.
+        var tmpMumc = this._readMumJson(tmpMumConfigFile);
+        // If not set, don't create a symlink to the cache directory for this repository
+        if(tmpMumc.name) {
+            // Attempt to create a symlink
+            // If the branch or tag is not present then it will return a fatal error and disconnect
+
+            var cacheDirectorySymlink = this._getMumCacheDirectory(installationDirectory)+'/'+tmpMumc.name;
+
+            var cmd = 'ln -s "'+cacheDirectory+'" "'+cacheDirectorySymlink+'"';
+
+            permaclog('Creating repository symlink: '+cacheDirectorySymlink+' to '+cacheDirectory);
+            permaclog(cmd);
+
+            try {
+                child_process.execSync(cmd);
+            } catch(e) {
+                return false;
+            }
         }
 
         permaclog(''); // Empty line in the console for readability

@@ -208,7 +208,7 @@ module.exports = {
     },
 
     writePreferences: function(appPrefsPath, preferences) {
-        fs.writeFileSync(appPrefsPath, JSON.stringify(preferences));
+        fs.writeFileSync(appPrefsPath, JSON.stringify(preferences, null, "\t"));
     },
 
     clearTerminal: function () {

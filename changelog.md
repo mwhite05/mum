@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.6-alpha.3
+* Made it easier to edit the mumi.json file by storing it in prettified format. 
+
 ### v0.2.6-alpha.2
 * Patched an issue that caused the deployment to fail if a repository cache location symlink already existed.
 

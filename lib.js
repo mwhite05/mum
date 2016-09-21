@@ -26,6 +26,8 @@ module.exports = {
 
         var o = cli.parse();
 
+        this.clog(o);
+
         if(! this.isArray(o.rawArgs) || ! o.rawArgs.length) {
             this.error('No arguments provided. At least one argument (the command name) must be provided. Expected: mum <command>', 0);
         }
@@ -52,6 +54,10 @@ module.exports = {
     },
 
     _mapArgsToObject: function(args, argsMap, command) {
+        if(argsMap.length < 1) {
+            return args;
+        }
+
         var o = {};
 
         var _self = this;
@@ -208,7 +214,7 @@ module.exports = {
     },
 
     writePreferences: function(appPrefsPath, preferences) {
-        fs.writeFileSync(appPrefsPath, JSON.stringify(preferences, null, "\t"));
+        fs.writeFileSync(appPrefsPath, JSON.stringify(preferences, null, 4));
     },
 
     clearTerminal: function () {

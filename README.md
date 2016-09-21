@@ -2,7 +2,7 @@
 
 `mum` is short for **M**odern **U**pdate **M**anager
 
-Currently on version: `0.2.6-alpha.4`
+Currently on version: `0.2.7-alpha`
 
 ---
 
@@ -186,6 +186,12 @@ Just navigate to the directory _above_ where you installed the project and run:
 `mum update`
 
 If you installed to `/var/www/html` then you would change directories to `cd /var/www` then run `mum update`
+
+Need to feel confident that the code is deployed in full with no extraneous files in the primary target area? Run `mum update clean`
+
+Is it time to update to a new branch/tag/hash? Well you could manually modify the `mumi.json` file but as of 0.2.7-alpha you can run `mum update <commitish>`. Alternately run `mum update "#<commitish>"`.
+
+If you need to run a clean and provide a new commit-ish then run: `mum update <commitish> clean` or `mum update "#<commitish>" clean`
 
 <h3 id="configuration">Configuration</h3>
 

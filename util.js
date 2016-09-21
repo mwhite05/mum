@@ -589,7 +589,7 @@ module.exports = {
             permaclog('Base Level Install Dir: '+ this._baseLevelInstallationDirectory);
             permaclog('Mumi.json location: '+ this._baseLevelInstallationDirectory+'/../mumi.json');
 
-            fs.writeFileSync(this._baseLevelInstallationDirectory+'/../mumi.json', JSON.stringify(mumi, null, "\t"));
+            fs.writeFileSync(this._baseLevelInstallationDirectory+'/../mumi.json', JSON.stringify(mumi, null, 4));
 
             var mumCacheDir = this._baseLevelInstallationDirectory+'/../.mum';
             if(!fs.existsSync(mumCacheDir)) {

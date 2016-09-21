@@ -75,12 +75,7 @@ const commands = {
             default: false
         }
     ],
-    update: [
-        {
-            name: 'clean',
-            default: false
-        }
-    ],
+    update: [],
     debug: []
 };
 
@@ -109,9 +104,52 @@ switch (command.name) {
         });
         break;
     case 'update':
-        var clean = (command.args.clean == 'clean');
-        if(clean === true) {
+        clog(command.args);
+        if(command.args[0] == 'clean' || command.args[1] == 'clean') {
             permaclog('-- RUNNING AS CLEAN UPDATE --');
+        } else if(command.args[0]) {
+            // Treat first argument as new branch/tag/hash to check out
+
+            if(command.args[0][0] != '#') {
+                command.args[0] = '#'+command.args[0];
+            }
+
+            if(!fs.existsSync('./mumi.json')) {
+                permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
+                process.exit(1);
+            }
+
+            var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
+            if(!lib.isObject(mumi)) {
+                permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
+                process.exit(1);
+            }
+
+            var sourceType = '';
+            try {
+                var stats = fs.statSync(mumi.source);
+                if(stats.isDirectory()) {
+                    sourceType = 'directory';
+                } else if(stats.isFile()) {
+                    sourceType = 'file';
+                } else if(stats.isSymbolicLink()) {
+                    sourceType = 'symlink';
+                }
+            } catch(e) {
+                sourceType = 'repository';
+            }
+
+            // Modify the hash on the repository URL if the source is a repository URL
+            if(sourceType == 'repository') {
+                var repositoryUrlParts = URL.parse(mumi.source);
+                mumi.source = repositoryUrlParts.path+command.args[0];
+                clog(repositoryUrlParts);
+                clog('new source: '+mumi.source);
+                fs.writeFileSync('./mumi.json', JSON.stringify(mumi, null, "\t"));
+            } else {
+                permaclog('Unable to switch commit-ish. mumi.json source is not a repository URL.');
+                process.exit(1);
+            }
         }
         util.update(clean);
         break;

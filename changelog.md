@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.6-alpha.4
+* Patched an issue where uploading files to the .mum cache locations would cause the next update to fail due to git pull errors.
+
 ### v0.2.6-alpha.3
 * Made it easier to edit the mumi.json file by storing it in prettified format. 
 

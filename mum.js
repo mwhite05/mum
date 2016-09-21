@@ -90,12 +90,12 @@ var command = lib.readCommandInput(commands);
 switch (command.name) {
     case 'help':
         // todo - write complete help docs
-        clog('Help docs are a work in progress.');
+        permaclog('Help docs are a work in progress.');
         break;
     case 'install':
         // For readability, print a couple blank lines
-        clog('');
-        clog('');
+        permaclog('');
+        permaclog('');
         var clean = (command.args.clean == 'clean');
         if(clean === true) {
             permaclog('-- RUNNING AS CLEAN INSTALL --');

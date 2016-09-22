@@ -55,6 +55,7 @@ module.exports = {
         dependencies: []
     },
     _defaultMumDependency: {
+        name: null,
         source: null,
         installTo: null,
         config: {}
@@ -336,6 +337,9 @@ module.exports = {
                 if(dep.installTo[0] == '.') {
                     dep.installTo = installationDirectory+'/'+dep.installTo;
                 }
+                if(dep.name) {
+                    o.name = dep.name;
+                }
                 // Add returned options to an array of returned options for all dependencies
                 self.install(dep.source, dep.installTo, false, o);
                 /*// loop over the tmpO and merge with o
@@ -535,6 +539,12 @@ module.exports = {
         var tmpMumConfigFile = cacheDirectory+'/mum.json';
         // Try to read the mum.json file in the cloned repository to get the name property from it.
         var tmpMumc = this._readMumJson(tmpMumConfigFile);
+
+        // If the dependency options define a custom name use that instead of the one defined by the repository itself.
+        if(lib.isPlainObject(o) && o.name) {
+            tmpMumc.name = o.name;
+        }
+
         // If not set, don't create a symlink to the cache directory for this repository
         if(tmpMumc.name) {
             // Attempt to create a symlink

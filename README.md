@@ -2,7 +2,7 @@
 
 `mum` is short for **M**odern **U**pdate **M**anager
 
-Currently on version: `0.2.7-alpha`
+Currently on version: `0.2.8-alpha`
 
 ---
 
@@ -224,6 +224,7 @@ Each item in the `dependencies` array _must_ be an object. Every dependency obje
 
 * source - The source to pull for the dependency. This can be any valid mum source type (including Git urls and paths to archive files or directories)
 * installTo - The target directory to install to. This can be an absolute path (starting with `/`) or a relative path (starting with `./`). If you set it to a relative path, it will be relative to the target installation directory. If you installed to `/var/www/html` then an installTo value of `./` would install the dependency to `/var/www/html` as well. 
+* name - Optional - The friendly name to use for the dependency when cloning it for deployment. This is used to create a symlink in the .mum directory to the actual clone directory used by mum. If the source repository has a name property in its own mum.json configuration it will be ignored in favor of the one you define in the dependency configuration.
 
 You can have multiple dependencies:
 
@@ -231,6 +232,7 @@ You can have multiple dependencies:
 {
     "dependencies": [
         {
+            "name": "wordpress",
             "source": "git@github.com:WordPress/WordPress.git#4.6",
             "installTo": "./"
         },

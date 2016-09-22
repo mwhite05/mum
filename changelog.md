@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.2.8-alpha
+* Added the ability to specify a name property in a dependency definition to allow naming of repositories that may have name collisions or no name at all.
+
+### v0.2.7-alpha
+* Added the ability to update to a different commit-ish than the one originally installed by passing an extra argument of the new commit-ish to mum update.
+
 ### v0.2.6-alpha.4
 * Patched an issue where uploading files to the .mum cache locations would cause the next update to fail due to git pull errors.
 

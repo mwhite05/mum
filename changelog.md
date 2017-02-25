@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.9-alpha.2
+* Updated the table of contents in the readme file to include a link to the new Environment Variables section.
+
 ### v0.2.9-alpha.1
 * Fixed mistake in the readme file where the current version number was not updated.
 

@@ -2,7 +2,7 @@
 
 `mum` is short for **M**odern **U**pdate **M**anager
 
-Currently on version: `0.2.9-alpha.1`
+Currently on version: `0.2.9-alpha.2`
 
 ---
 
@@ -43,6 +43,7 @@ file then mum may be the solution for you.
     * [Configuration (optional)](#configuration)
         * [Dependencies](#dependencies)
         * [Install Scripts](#install-scripts)
+        * [Environment Variables](#environment-variables)
         * [Install Map](#install-map)
 ---
 

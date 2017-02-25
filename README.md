@@ -2,7 +2,7 @@
 
 `mum` is short for **M**odern **U**pdate **M**anager
 
-Currently on version: `0.2.8-alpha`
+Currently on version: `0.2.9-alpha`
 
 ---
 
@@ -311,6 +311,15 @@ There are four types of install scripts available:
 
 The reason for these different levels is to ensure some level of future flexibility in the API in case new functionality or steps are added and
 to allow you to control whether something runs absolutely last or just sort of last when dependencies that _also have scripts_ are involved.
+
+<h4 id="environment-variables">Environment Variables</h4>
+
+Your installation scripts have access three environment variables that are set by mum.
+
+* MUM_CURRENT_SOURCE_DIR - This is the path from which the files are being copied. This is set uniquely for any dependencies.
+* MUM_CURRENT_INSTALL_DIR - This is the path to which the files are being copied. This is set uniquely for any dependencies but may be the same as the primary target directory.
+* MUM_CACHE_DIR - This is the directory where mum stores all the sources unpacked from archive files or checked out from git repositories. This value will be the same for all scripts.
+* MUM_INITIAL_INSTALL_DIR - This is the directory that mum was instructed to install to as an initial target directory. This value will be the same for all scripts.
 
 <h4 id="install-map">Install Map</h4>
 

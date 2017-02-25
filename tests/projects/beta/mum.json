@@ -16,14 +16,8 @@
             }
         ],
         "scripts": {
-            "before": ["./scripts/prepare"],
-            "after": ["./scripts/after.php"]
-        }
-    },
-    "update": {
-        "scripts": {
-            "before": ["./scripts/prepare.php"],
-            "after": ["./scripts/after"]
+            "beforeInstall": ["./scripts/prepare.php"],
+            "afterInstall": ["./scripts/after.php"]
         }
     },
     "dependencies": [

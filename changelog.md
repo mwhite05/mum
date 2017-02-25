@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.9-alpha
+* Mum now sets environment variables to make accessing various critical directory paths much easier and less error prone. [MUM_CACHE_DIR, MUM_CURRENT_INSTALL_DIR, MUM_CURRENT_SOURCE_DIR, MUM_INITIAL_INSTALL_DIR]
+
 ### v0.2.8-alpha
 * Added the ability to specify a name property in a dependency definition to allow naming of repositories that may have name collisions or no name at all.
 

@@ -226,7 +226,7 @@ module.exports = {
             return path.resolve(a+'/'+b);
         }
     },
-    _getMumCacheDirectory: function(installationDirectory) {
+    _getMumCacheDirectory: function() {
         var mumDirectory = this._resolve(this._baseLevelInstallationDirectory, '../.mum');
         if(!fs.existsSync(mumDirectory)) {
             mkdirp.sync(mumDirectory);
@@ -254,6 +254,12 @@ module.exports = {
         installationDirectory = path.resolve(installationDirectory);
         this._validateSourceDirectory(sourceDirectory);
         this._prepareInstallationDirectory(installationDirectory, clean);
+
+        if(!process.env.MUM_CURRENT_INSTALL_DIR) {
+            process.env.MUM_INITIAL_INSTALL_DIR = installationDirectory;
+        }
+        process.env.MUM_CURRENT_SOURCE_DIR = sourceDirectory;
+        process.env.MUM_CURRENT_INSTALL_DIR = installationDirectory;
 
         var mumc = this._readMumJson(sourceDirectory+'/mum.json');
 
@@ -642,6 +648,8 @@ module.exports = {
         var self = this;
 
         var errorRegex = new RegExp('ERROR([\s]+)?$', 'gi');
+
+        process.env.MUM_CACHE_DIR = this._getMumCacheDirectory();
 
         var cwd = process.cwd();
         o.beforeInstall.forEach(function(value, index) {

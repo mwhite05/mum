@@ -315,7 +315,7 @@ to allow you to control whether something runs absolutely last or just sort of l
 
 <h4 id="environment-variables">Environment Variables</h4>
 
-Your installation scripts have access three environment variables that are set by mum.
+Your installation scripts have access to some environment variables that are set by mum.
 
 * MUM_CURRENT_SOURCE_DIR - This is the path from which the files are being copied. This is set uniquely for any dependencies.
 * MUM_CURRENT_INSTALL_DIR - This is the path to which the files are being copied. This is set uniquely for any dependencies but may be the same as the primary target directory.

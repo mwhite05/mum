@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.9-alpha.1
+* Fixed mistake in the readme file where the current version number was not updated.
+
 ### v0.2.9-alpha
 * Mum now sets environment variables to make accessing various critical directory paths much easier and less error prone. [MUM_CACHE_DIR, MUM_CURRENT_INSTALL_DIR, MUM_CURRENT_SOURCE_DIR, MUM_INITIAL_INSTALL_DIR]
 

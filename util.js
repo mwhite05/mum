@@ -357,6 +357,13 @@ module.exports = {
                     o.afterInstall.push(value);
                 });*/
             });
+
+            // Restore the parent project's environment variables
+            if(!process.env.MUM_CURRENT_INSTALL_DIR) {
+                process.env.MUM_INITIAL_INSTALL_DIR = installationDirectory;
+            }
+            process.env.MUM_CURRENT_SOURCE_DIR = sourceDirectory;
+            process.env.MUM_CURRENT_INSTALL_DIR = installationDirectory;
         }
 
         o.afterSync.push({

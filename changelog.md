@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.9-alpha.3
+* Patched an issue where the parent project's environment variables were not restored after installing dependencies.
+
 ### v0.2.9-alpha.2
 * Updated the table of contents in the readme file to include a link to the new Environment Variables section.
 

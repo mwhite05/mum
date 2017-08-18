@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.10-alpha.1
+* Patched a few lines that didn't get fully changed for the stdio behavior update.
+
 ### v0.2.10-alpha
 * Changed how execSync() calls are made for the scripts that are called. Previously we captured the output and then rendered it after the script ran. We now allow the stdin, stdout, and stderr pipes to be inherited by the child process running the scripts so you can see real-time output from the script.
 

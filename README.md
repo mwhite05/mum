@@ -54,7 +54,7 @@ source types (git, tarballs, zip files), pulling in dependencies your project ma
 syncing files from one location to many target locations, and even running before and
 after installation scripts that you write.
 
-It's primary benefit is being able to deploy directly from any number of private or
+Its primary benefit is being able to deploy directly from any number of private or
 public git repositories at specific hashes/branches/tags as required, though
 installation from a source directory or tar/zip file is also supported.
 
@@ -93,7 +93,7 @@ see how, keep reading.
 
 <h2 id="project-goals">Project Goals</h2>
 
-* Provide an deployment (installation _and_ update) system that can run on *nix.
+* Provide a deployment (installation _and_ update) system that can run on *nix.
 * Software language independence. Use the same tool to install and update from any repository you can access.
 * Scriptable. Make custom things happen at specific times before or after deployment.
 * Support nested / recursive dependencies.

@@ -174,7 +174,7 @@ You can install directly from your Git repository to a location on your server (
 `mum install git@github.com:mwhite05/wpdemo.git#master /var/www/html`
 
     NOTE! It is very important that you include the #<branch|tag|sha1> at the end of your URL.
-    This tells mum exactly what to part of your repository to check out and install.
+    This tells mum exactly what part of your repository to check out and install.
 
 <h4 id="mum-update">4. - Updating Any Mum Installed Project</h4>
 
@@ -190,11 +190,11 @@ Need to feel confident that the code is deployed in full with no extraneous file
 
 Is it time to update to a new branch/tag/hash? Well you could manually modify the `mumi.json` file but as of 0.2.7-alpha you can run `mum update <commitish>`. Alternately run `mum update "#<commitish>"`.
 
-If you need to run a clean and provide a new commit-ish then run: `mum update <commitish> clean` or `mum update "#<commitish>" clean`
+If you need to run a clean update and provide a new commit-ish then run: `mum update <commitish> clean` or `mum update "#<commitish>" clean`
 
 <h3 id="configuration">Configuration</h3>
 
-Configuration is optional. You only need configuration to do more advanced things such as:
+Configuration is optional. You only need a configuration file to do more advanced things such as:
 
 * Map directories in your project to multiple target destinations (instead of just copying all the files to one target directory)
 * Exclude some files / folders from being installed
@@ -221,9 +221,9 @@ You can add one or more dependencies to your project using the `dependencies` ar
 
 Each item in the `dependencies` array _must_ be an object. Every dependency object _must_ contain two properties:
 
-* source - The source to pull for the dependency. This can be any valid mum source type (including Git urls and paths to archive files or directories)
-* installTo - The target directory to install to. This can be an absolute path (starting with `/`) or a relative path (starting with `./`). If you set it to a relative path, it will be relative to the target installation directory. If you installed to `/var/www/html` then an installTo value of `./` would install the dependency to `/var/www/html` as well. 
-* name - Optional - The friendly name to use for the dependency when cloning it for deployment. This is used to create a symlink in the .mum directory to the actual clone directory used by mum. If the source repository has a name property in its own mum.json configuration it will be ignored in favor of the one you define in the dependency configuration.
+* **source** - The source to pull for the dependency. This can be any valid mum source type (including Git urls and paths to archive files or directories)
+* **installTo** - The target directory to install to. This can be an absolute path (starting with `/`) or a relative path (starting with `./`). If you set it to a relative path, it will be relative to the target installation directory. If you installed to `/var/www/html` then an installTo value of `./` would install the dependency to `/var/www/html` as well. 
+* **name** - Optional - The friendly name to use for the dependency when cloning it for deployment. This is used to create a symlink in the .mum directory to the actual clone directory used by mum. If the source repository has a name property in its own mum.json configuration it will be ignored in favor of the one you define in the dependency configuration.
 
 You can have multiple dependencies:
 

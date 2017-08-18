@@ -332,8 +332,8 @@ module.exports = {
         mumc.install.scripts.beforeInstall.forEach(function(scriptFile, index) {
             var scriptFile = self._resolve(sourceDirectory, scriptFile);
             // Force-set executable permissions on the target script file
-            permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
-            permaclog(child_process.execSync('"'+scriptFile+'"').toString());
+            child_process.execSync('chmod u+x "'+scriptFile+'"', {stdio: 'inherit'});
+            child_process.execSync('"'+scriptFile+'"', {stdio: 'inherit'});
         });
         process.chdir(cwd);*/
 
@@ -667,17 +667,12 @@ module.exports = {
                 permaclog('Switching directories to: '+scriptDir);
                 process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
-                permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+                child_process.execSync('chmod u+x "'+scriptFile+'"', {stdio: 'inherit'}).toString();
 
                 try {
                     // Run the script file as a command
                     permaclog('Executing beforeInstall script: '+scriptFile);
-                    var output = child_process.execSync('"' + scriptFile + '"').toString();
-                    permaclog(output);
-
-                    if(errorRegex.test(output)) {
-                        process.exit(1); // Error!
-                    }
+                    child_process.execSync('"' + scriptFile + '"', {stdio: 'inherit'});
                 } catch (e) {
                     permaclog(e.stdout);
                     permaclog(e.message);
@@ -694,17 +689,12 @@ module.exports = {
                 permaclog('Switching directories to: '+scriptDir);
                 process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
-                permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+                child_process.execSync('chmod u+x "'+scriptFile+'"', {stdio: 'inherit'});
 
                 try {
                     // Run the script file as a command
                     permaclog('Executing beforeSync script: '+scriptFile);
-                    var output = child_process.execSync('"' + scriptFile + '"').toString();
-                    permaclog(output);
-
-                    if(errorRegex.test(output)) {
-                        process.exit(1); // Error!
-                    }
+                    child_process.execSync('"' + scriptFile + '"', {stdio: 'inherit'});
                 } catch (e) {
                     permaclog(e.stdout);
                     permaclog(e.message);
@@ -754,12 +744,12 @@ module.exports = {
                 permaclog('Switching directories to: '+scriptDir);
                 process.chdir(scriptDir);
                 // Force-set executable permissions on the target script file
-                permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"').toString());
+                permaclog(child_process.execSync('chmod u+x "'+scriptFile+'"', {stdio: 'inherit'}).toString());
 
                 try {
                     // Run the script file as a command
                     permaclog('Executing afterInstall script: '+scriptFile);
-                    var output = child_process.execSync('"' + scriptFile + '"').toString();
+                    var output = child_process.execSync('"' + scriptFile + '"', {stdio: 'inherit'}).toString();
                     permaclog(output);
 
                     if(errorRegex.test(output)) {

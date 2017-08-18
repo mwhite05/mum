@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.10-alpha
+* Changed how execSync() calls are made for the scripts that are called. Previously we captured the output and then rendered it after the script ran. We now allow the stdin, stdout, and stderr pipes to be inherited by the child process running the scripts so you can see real-time output from the script.
+
 ### v0.2.9-alpha.4
 * Removed the part of the readme file that lists the current version. NPM already shows that information and it's one less thing for me to forget to do...
 

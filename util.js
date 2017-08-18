@@ -654,8 +654,6 @@ module.exports = {
     _runSyncProcess: function(o) {
         var self = this;
 
-        var errorRegex = new RegExp('ERROR([\s]+)?$', 'gi');
-
         process.env.MUM_CACHE_DIR = this._getMumCacheDirectory();
 
         var cwd = process.cwd();

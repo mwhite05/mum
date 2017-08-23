@@ -233,7 +233,7 @@ module.exports = {
         }
         return mumDirectory;
     },
-    installFromDirectory: function(sourceDirectory, installationDirectory, clean, o, callback) {
+    installFromDirectory: function(sourceDirectory, installationDirectory, clean, o, callback, meta) {
         var self = this;
         var baseLevel = false;
         if(!(o instanceof Object)) {
@@ -364,6 +364,9 @@ module.exports = {
             }
             process.env.MUM_CURRENT_SOURCE_DIR = sourceDirectory;
             process.env.MUM_CURRENT_INSTALL_DIR = installationDirectory;
+
+            // It is possible this repository branch had a dependency on another branch in the same repository. If that happened then we need to be sure we have the correct files checked out now.
+            this._checkOutCommitIsh(meta.cacheDirectory, meta.commitIsh);
         }
 
         o.afterSync.push({
@@ -508,6 +511,8 @@ module.exports = {
         // todo Syntax is part of commit-ish like: #>=2.0.0
         // todo Will use node-semver to figure this out - probably will have to clone the repo first and get lists of all tags and branches to use for comparison in a loop
 
+        var meta = {};
+
         // Separate the commit-ish from the repository URL
         var repositoryUrlParts = URL.parse(repositoryUrl);
 
@@ -516,6 +521,10 @@ module.exports = {
 
         var hashedUrl = sha1(repositoryUrl);
         var cacheDirectory = this._getMumCacheDirectory(installationDirectory)+'/'+hashedUrl;
+
+        meta.commitIsh = commitIsh;
+        meta.repositoryUrl = repositoryUrl;
+        meta.cacheDirectory = cacheDirectory;
 
         if(!fs.existsSync(cacheDirectory)) {
             //lib.wipeDirectory(cacheDirectory);
@@ -580,9 +589,11 @@ module.exports = {
             }
         }
 
+        meta.name = tmpMumc.name;
+
         permaclog(''); // Empty line in the console for readability
 
-        this.installFromDirectory(cacheDirectory, installationDirectory, clean, o, callback);
+        this.installFromDirectory(cacheDirectory, installationDirectory, clean, o, callback, meta);
     },
     install: function(source, target, clean, o, callback) {
         var installType = '';

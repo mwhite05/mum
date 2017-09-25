@@ -244,6 +244,7 @@ module.exports = {
                 beforeSync: [],
                 afterSync: [],
                 afterInstall: [],
+                cleanup: [],
                 maps: []
             };
         }
@@ -275,7 +276,7 @@ module.exports = {
         }
 
         if(! lib.isObject(mumc.install.scripts)) {
-            permaclog('Invalid mum.json configuration : The install.scripts property must be an <object>{beforeInstall:<array><string>, beforeSync:<array><string> afterSync:<array><string>, afterInstall:<array><string>}.');
+            permaclog('Invalid mum.json configuration : The install.scripts property must be an <object>{beforeInstall:<array><string>, beforeSync:<array><string> afterSync:<array><string>, afterInstall:<array><string>, cleanup:<array><string>}.');
             process.exit(1);
         }
 
@@ -295,6 +296,10 @@ module.exports = {
             mumc.install.scripts.afterInstall = [];
         }
 
+        if(typeof(mumc.install.scripts.cleanup) == 'undefined') {
+            mumc.install.scripts.cleanup = [];
+        }
+
         if(! lib.isArray(mumc.install.scripts.beforeInstall)) {
             permaclog('Invalid mum.json configuration : The install.scripts.beforeInstall property must be an array<string>.');
             process.exit(1);
@@ -312,6 +317,11 @@ module.exports = {
 
         if(! lib.isArray(mumc.install.scripts.afterInstall)) {
             permaclog('Invalid mum.json configuration : The install.scripts.afterInstall property must be an array<string>.');
+            process.exit(1);
+        }
+
+        if(! lib.isArray(mumc.install.scripts.cleanup)) {
+            permaclog('Invalid mum.json configuration : The install.scripts.cleanup property must be an array<string>.');
             process.exit(1);
         }
 
@@ -377,6 +387,11 @@ module.exports = {
         o.afterInstall.push({
             directory: sourceDirectory,
             scripts: mumc.install.scripts.afterInstall
+        });
+
+        o.cleanup.push({
+            directory: sourceDirectory,
+            scripts: mumc.install.scripts.cleanup
         });
 
         // If there are no map items, use the source and installation directory as the map
@@ -718,49 +733,36 @@ module.exports = {
             lib.overlayFilesRecursive(value.source, value.installTo, value.excludes, true);
         });
 
-        o.afterSync.forEach(function(value, index) {
-            value.scripts.forEach(function(scriptFile, index) {
-                var scriptFile = self._resolve(value.directory, scriptFile);
-                permaclog('Setting permissions on and attempting to run: '+scriptFile);
-                var scriptDir = path.dirname(scriptFile);
-                permaclog('Switching directories to: '+scriptDir);
-                process.chdir(scriptDir);
-                // Force-set executable permissions on the target script file
-                child_process.execSync('chmod u+x "'+scriptFile+'"', {stdio: 'inherit'});
+        var scriptSets = ['afterSync', 'afterInstall', 'cleanup'];
 
-                try {
-                    // Run the script file as a command
-                    permaclog('Executing afterSync script: '+scriptFile);
-                    child_process.execSync('"' + scriptFile + '"', {stdio: 'inherit'});
-                } catch (e) {
-                    permaclog(e.stdout);
-                    permaclog(e.message);
-                    process.exit(1);
-                }
+        for(var index in scriptSets) {
+            if(!scriptSets.hasOwnProperty(index)) {
+                continue;
+            }
+            var scriptSet = scriptSets[index];
+            o[scriptSet].forEach(function(value, index) {
+                value.scripts.forEach(function(scriptFile, index) {
+                    var scriptFile = self._resolve(value.directory, scriptFile);
+                    permaclog('Setting permissions on and attempting to run: ' + scriptFile);
+                    var scriptDir = path.dirname(scriptFile);
+                    permaclog('Switching directories to: ' + scriptDir);
+                    process.chdir(scriptDir);
+                    // Force-set executable permissions on the target script file
+                    child_process.execSync('chmod u+x "' + scriptFile + '"', {stdio: 'inherit'});
+
+                    try {
+                        // Run the script file as a command
+                        permaclog('Executing '+scriptSet+' script: ' + scriptFile);
+                        child_process.execSync('"' + scriptFile + '"', {stdio: 'inherit'});
+                    } catch(e) {
+                        permaclog(e.stdout);
+                        permaclog(e.message);
+                        process.exit(1);
+                    }
+                });
             });
-        });
+        }
 
-        o.afterInstall.forEach(function(value, index) {
-            value.scripts.forEach(function(scriptFile, index) {
-                var scriptFile = self._resolve(value.directory, scriptFile);
-                permaclog('Setting permissions on and attempting to run: '+scriptFile);
-                var scriptDir = path.dirname(scriptFile);
-                permaclog('Switching directories to: '+scriptDir);
-                process.chdir(scriptDir);
-                // Force-set executable permissions on the target script file
-                child_process.execSync('chmod u+x "'+scriptFile+'"', {stdio: 'inherit'});
-
-                try {
-                    // Run the script file as a command
-                    permaclog('Executing afterInstall script: '+scriptFile);
-                    child_process.execSync('"' + scriptFile + '"', {stdio: 'inherit'});
-                } catch (e) {
-                    permaclog(e.stdout);
-                    permaclog(e.message);
-                    process.exit(1);
-                }
-            });
-        });
         process.chdir(cwd);
     },
     update: function(clean) {

@@ -307,6 +307,7 @@ There are four types of install scripts available:
 * beforeSync - Runs after `beforeInstall` and before any files are synced to the target installation directory.
 * afterSync - Runs after all files are synced to the target installation directory (including files from dependencies)
 * afterInstall - Runs after `afterSync` and after all files are synced to the target installation directory (including files from dependencies)
+* cleanup - Runs after `afterInstall` has run for the primary installation target and all dependencies. Your cleanup scripts should not do extensive work but instead should perform actions such as setting file permissions, removing extraneous installation generated files, etc. Avoid creating new files or directories as part of the cleanup process.
 
 The reason for these different levels is to ensure some level of future flexibility in the API in case new functionality or steps are added and
 to allow you to control whether something runs absolutely last or just sort of last when dependencies that _also have scripts_ are involved.

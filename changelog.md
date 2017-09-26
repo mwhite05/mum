@@ -1,5 +1,8 @@
 # Changelog
 
+### v0.2.11-alpha.1
+* Added better handling the cleanup scripts (and others) to avoid possible scenarios where an undefined value would cause the install process to fail.
+
 ### v0.2.11-alpha
 * Added a new set of cleanup scripts that run after the afterInstall set. This allows all participating levels to do cleanup on their behalf independent of and after all participating levels complete their work.
 * Enhancement that allows one branch in a repository to depend on other branches in the same repository (e.g. branch A depends on branches B and C) vs only being able to use dependencies if they resided in complete separate repositories.

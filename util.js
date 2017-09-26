@@ -40,7 +40,8 @@ module.exports = {
                 beforeInstall: [],
                 beforeSync: [],
                 afterSync: [],
-                afterInstall: []
+                afterInstall: [],
+                cleanup: []
             },
             excludes: []
         },
@@ -49,7 +50,8 @@ module.exports = {
                 beforeInstall: [],
                 beforeSync: [],
                 afterSync: [],
-                afterInstall: []
+                afterInstall: [],
+                cleanup: []
             }
         },
         dependencies: []
@@ -739,8 +741,14 @@ module.exports = {
             if(!scriptSets.hasOwnProperty(index)) {
                 continue;
             }
-            var scriptSet = scriptSets[index];
-            o[scriptSet].forEach(function(value, index) {
+            var scriptSetName = scriptSets[index];
+            var scriptSet = o[scriptSetName];
+
+            if(!scriptSet) {
+                continue;
+            }
+            permaclog('Running script set: ' + scriptSetName + '.');
+            scriptSet.forEach(function(value, index) {
                 value.scripts.forEach(function(scriptFile, index) {
                     var scriptFile = self._resolve(value.directory, scriptFile);
                     permaclog('Setting permissions on and attempting to run: ' + scriptFile);
@@ -752,7 +760,7 @@ module.exports = {
 
                     try {
                         // Run the script file as a command
-                        permaclog('Executing '+scriptSet+' script: ' + scriptFile);
+                        permaclog('Executing '+scriptSetName+' script: ' + scriptFile);
                         child_process.execSync('"' + scriptFile + '"', {stdio: 'inherit'});
                     } catch(e) {
                         permaclog(e.stdout);

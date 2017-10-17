@@ -377,8 +377,11 @@ module.exports = {
             process.env.MUM_CURRENT_SOURCE_DIR = sourceDirectory;
             process.env.MUM_CURRENT_INSTALL_DIR = installationDirectory;
 
-            // It is possible this repository branch had a dependency on another branch in the same repository. If that happened then we need to be sure we have the correct files checked out now.
-            this._checkOutCommitIsh(meta.cacheDirectory, meta.commitIsh);
+            // Only worry about this if the meta data is defined.
+            if(meta && meta.cacheDirectory && meta.commitIsh) {
+                // It is possible this repository branch had a dependency on another branch in the same repository. If that happened then we need to be sure we have the correct files checked out now.
+                this._checkOutCommitIsh(meta.cacheDirectory, meta.commitIsh);
+            }
         }
 
         o.afterSync.push({

@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.2.11-alpha.2
+* If installing from a directory or zip resources that was not initially a repository clone then we won't have any meta data. If we don't have meta data then we don't need to check out the original commit.
+* Patched an issue where the clean install feature failed to work. Improved sanity checking on the target path for wiping a directory to better ensure the root directory cannot be wiped.
+
 ### v0.2.11-alpha.1
 * Added better handling the cleanup scripts (and others) to avoid possible scenarios where an undefined value would cause the install process to fail.
 

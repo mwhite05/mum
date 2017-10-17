@@ -282,10 +282,27 @@ module.exports = {
         return listing;
     },
 
-    wipeDirectory: function(path) {
-        if(path && typeof(path) === 'string' && path !== '/') {
-            child_process.execSync('rm -rf "' + path + '"/*');
+    wipeDirectory: function(directory) {
+        if(!directory || typeof(directory) !== 'string') {
+            return;
         }
+
+        var preResolvedDirectory = directory;
+
+        directory = path.resolve(directory.trim());
+
+        if(directory !== '' && directory !== '/') {
+            directory += '/*';
+            if(directory === '/*') {
+                throw new Error('Attempt to wipe root directory thwarted. Target directory path provided was: "'+preResolvedDirectory+'"');
+            }
+            var escapedDirectory = directory.replace(' ', '\\ ');
+            var cmd = 'rm -rf ' + escapedDirectory;
+            child_process.execSync(cmd, {stdio: 'inherit'});
+            return;
+        }
+
+        throw new Error('Attempt to wipe root directory thwarted. Target directory path provided was: "'+preResolvedDirectory+'"');
     },
 
     capitalizeWords: function (string) {

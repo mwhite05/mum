@@ -160,7 +160,7 @@ module.exports = {
                 this._installationConfirmed = true;
                 // Ensure directory is created (recursive)
                 if(installationMode == 'wipe') {
-                    permaclog('Attempting to wipe the installation directory: '+installationDirectory);
+                    permaclog('Attempting to wipe the installation directory: '+path.resolve(installationDirectory));
                     lib.wipeDirectory(installationDirectory);
                     if(! lib.isDirectoryEmpty(installationDirectory)) { // If directory is still not empty
                         permaclog('Directory is not empty. Failed to wipe the installation directory: '+installationDirectory);

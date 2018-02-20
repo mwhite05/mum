@@ -7,7 +7,7 @@ const child_process = require('child_process');
 const cla = require('command-line-args');
 
 module.exports = {
-
+    disableSync: false,
     error: function(errorMessage, errorCode) {
         this.clog('Error['+errorCode+']: '+errorMessage);
         process.exit(errorCode);
@@ -359,6 +359,10 @@ module.exports = {
 
     overlayFilesRecursive: function (sourcePath, targetPath, excludes, overwrite) {
         var self = this;
+        if(this.disableSync === true) {
+            self.clog('Skipping recursive overlay of files from: '+sourcePath+ ' to: '+targetPath);
+            return true;
+        }
         self.clog('Source path: ' + sourcePath);
         self.clog('Target path: ' + targetPath);
 

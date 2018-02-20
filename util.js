@@ -62,12 +62,17 @@ module.exports = {
         installTo: null,
         config: {}
     },
+    disableSync: false,
     /**
     * A commit-ish can be any of: sha-1 hash for a specific commit, branch name, tag name.
     * If the commit-ish portion of the URL is blank or left of entirely, the default is master.
     *
     */
     _cloneRepository: function(repositoryUrl, cloneTargetDirectory) {
+        if(this.disableSync === true) {
+            clog('Skipping clone of repository: '+repositoryUrl+ ' to: '+cloneTargetDirectory);
+            return true;
+        }
         lib.wipeDirectory(cloneTargetDirectory);
 
         // If the branch or tag is not present then it will return a fatal error and disconnect
@@ -84,6 +89,10 @@ module.exports = {
         return true;
     },
     _checkOutCommitIsh: function(repositoryPath, commitIsh) {
+        if(this.disableSync === true) {
+            clog('Skipping checkout of commitIsh: '+commitIsh+ ' on: '+repositoryPath);
+            return true;
+        }
         // If the hash, branch or tag is not present then it will return a fatal error and disconnect
         var cmd = 'git checkout "' + commitIsh+'"';
 
@@ -104,6 +113,10 @@ module.exports = {
         return true;
     },
     _updateLocalRepository: function(repositoryPath, commitIsh) {
+        if(this.disableSync === true) {
+            clog('Skipping local repository update for commitIsh: '+commitIsh+ ' on: '+repositoryPath);
+            return true;
+        }
         // If the hash, branch or tag is not present then it will return a fatal error and disconnect
         var cmds = [];
         cmds.push('rm -rf *'); // Removing all files works better than just a hard reset
@@ -135,6 +148,9 @@ module.exports = {
         return commitIsh ? commitIsh : 'master';
     },
     _prepareInstallationDirectory: function(installationDirectory, clean) {
+        if(this.disableSync === true) {
+            clean = false;
+        }
         var installationMode = 'overwrite';
         if(fs.existsSync(installationDirectory)) { // If installation directory exists
             if(clean && ! lib.isDirectoryEmpty(installationDirectory)) { // If not empty
@@ -737,7 +753,6 @@ module.exports = {
             // sync source to destination
             lib.overlayFilesRecursive(value.source, value.installTo, value.excludes, true);
         });
-
         var scriptSets = ['afterSync', 'afterInstall', 'cleanup'];
 
         for(var index in scriptSets) {

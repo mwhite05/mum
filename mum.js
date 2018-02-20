@@ -85,7 +85,15 @@ var command = lib.readCommandInput(commands);
 switch (command.name) {
     case 'help':
         // todo - write complete help docs
-        permaclog('Help docs are a work in progress.');
+        permaclog('Usage examples: ');
+        permaclog('');
+        permaclog('# mum install <folder> <installTargetFolder>');
+        permaclog('# mum install <zipFile> <installTargetFolder>');
+        permaclog('# mum install <repoUrl#branch|tag|hash> <installTargetFolder>');
+        permaclog('# mum update <branch|tag|hash>');
+        permaclog('# mum update');
+        permaclog('# mum update disableSync');
+        permaclog('# mum update ds');
         break;
     case 'install':
         // For readability, print a couple blank lines
@@ -108,10 +116,13 @@ switch (command.name) {
         if(command.args[0] == 'clean' || command.args[1] == 'clean') {
             permaclog('-- RUNNING AS CLEAN UPDATE --');
         } else if(command.args[0]) {
-            // Treat first argument as new branch/tag/hash to check out
-
-            if(command.args[0][0] != '#') {
-                command.args[0] = '#'+command.args[0];
+            var updateMumiJson = false;
+            if(command.args[0] === 'ds' || command.args[0] === 'disableSync') {
+                util.disableSync = true;
+                lib.disableSync = true;
+            } else if(command.args[0][0] != '#') {
+                command.args[0] = '#' + command.args[0];
+                updateMumiJson = true;
             }
 
             if(!fs.existsSync('./mumi.json')) {
@@ -140,15 +151,17 @@ switch (command.name) {
             }
 
             // Modify the hash on the repository URL if the source is a repository URL
-            if(sourceType == 'repository') {
-                var repositoryUrlParts = URL.parse(mumi.source);
-                mumi.source = repositoryUrlParts.path+command.args[0];
-                clog(repositoryUrlParts);
-                clog('new source: '+mumi.source);
-                fs.writeFileSync('./mumi.json', JSON.stringify(mumi, null, "\t"));
-            } else {
-                permaclog('Unable to switch commit-ish. mumi.json source is not a repository URL.');
-                process.exit(1);
+            if(updateMumiJson === true) {
+                if(sourceType == 'repository') {
+                    var repositoryUrlParts = URL.parse(mumi.source);
+                    mumi.source = repositoryUrlParts.path + command.args[0];
+                    clog(repositoryUrlParts);
+                    clog('new source: ' + mumi.source);
+                    fs.writeFileSync('./mumi.json', JSON.stringify(mumi, null, "\t"));
+                } else {
+                    permaclog('Unable to switch commit-ish. mumi.json source is not a repository URL.');
+                    process.exit(1);
+                }
             }
         }
         util.update(clean);

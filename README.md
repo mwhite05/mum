@@ -192,6 +192,8 @@ Is it time to update to a new branch/tag/hash? Well you could manually modify th
 
 If you need to run a clean update and provide a new commit-ish then run: `mum update <commitish> clean` or `mum update "#<commitish>" clean`
 
+If you want to debug your installer scripts and processes, `mum update disableSync` (or `mum update ds`) is a handy command that skips all file copy, checkout, and clone operations that otherwise would have taken place. This allows you to modify your scripts without committing them for the purpose of testing and debugging.
+
 <h3 id="configuration">Configuration</h3>
 
 Configuration is optional. You only need a configuration file to do more advanced things such as:

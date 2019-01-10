@@ -107,7 +107,10 @@ module.exports = {
             // Change directories back to the original working directory
             process.chdir(cwd);
         } catch(e) {
-            return false;
+            permaclog('The hash, branch, or tag provided could not be found.');
+            permaclog('Repository Path: '+repositoryPath);
+            permaclog('Commit-ish: '+commitIsh);
+            this.exit(1);
         }
 
         return true;
@@ -632,6 +635,7 @@ module.exports = {
                     child_process.execSync(cmd);
                 } catch(e) {
                     permaclog('Failed to create repository symlink: ' + cacheDirectorySymlink + ' to ' + cacheDirectory);
+                    this.exit(1);
                 }
             }
         }

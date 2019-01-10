@@ -109,6 +109,7 @@ switch (command.name) {
         util.install(command.args.source, command.args.installationDirectory, clean, null, function() {
             // post-installation callback method
             util.reset();
+            util.notifySuccess();
         });
         break;
     case 'update':
@@ -127,13 +128,13 @@ switch (command.name) {
 
             if(!fs.existsSync('./mumi.json')) {
                 permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
-                process.exit(1);
+                util.exit(1);
             }
 
             var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
             if(!lib.isObject(mumi)) {
                 permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
-                process.exit(1);
+                util.exit(1);
             }
 
             var sourceType = '';
@@ -160,7 +161,7 @@ switch (command.name) {
                     fs.writeFileSync('./mumi.json', JSON.stringify(mumi, null, "\t"));
                 } else {
                     permaclog('Unable to switch commit-ish. mumi.json source is not a repository URL.');
-                    process.exit(1);
+                    util.exit(1);
                 }
             }
         }

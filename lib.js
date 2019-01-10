@@ -5,12 +5,13 @@ const handlebars = require('handlebars');
 const path = require('path');
 const child_process = require('child_process');
 const cla = require('command-line-args');
+const util = require('util');
 
 module.exports = {
     disableSync: false,
     error: function(errorMessage, errorCode) {
         this.clog('Error['+errorCode+']: '+errorMessage);
-        process.exit(errorCode);
+        util.exit(errorCode);
     },
 
     readCommandInput: function(commands) {
@@ -370,12 +371,12 @@ module.exports = {
 
         if(!fs.existsSync(sourcePath)) {
             self.clog('Could not find the source directory for overlay operation: '+sourcePath);
-            process.exit(1);
+            util.exit(1);
         }
 
         if(! fs.existsSync(targetPath) && ! mkdirp.sync(targetPath)) {
             self.clog('Could not find or create the destination directory for overlay operation: '+targetPath);
-            process.exit(1);
+            util.exit(1);
         }
 
         self.clog('Overlaying: ' + sourcePath + ' onto: ' + targetPath);
@@ -408,7 +409,7 @@ module.exports = {
         try {
             child_process.execSync($command);
         } catch(e) {
-            process.exit(1);
+            util.exit(1);
         }
 
         self.clog('Done overlaying files.');

@@ -1,4 +1,4 @@
 #! /bin/bash
 
-#node ../mum.js install ./projects/alpha.zip ./www/html
-node ../mum.js install ./projects/alpha.tar.gz ./www/html
+node ../mum.js install ./projects/alpha.zip ./www/html
+#node ../mum.js install ./projects/alpha.tar.gz ./www/html

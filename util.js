@@ -152,6 +152,7 @@ module.exports = {
             clean = false;
         }
         var installationMode = 'overwrite';
+        var installAllowed = this._installationConfirmed;
         if(fs.existsSync(installationDirectory)) { // If installation directory exists
             if(clean && ! lib.isDirectoryEmpty(installationDirectory)) { // If not empty
                 installationMode = 'wipe';
@@ -168,11 +169,16 @@ module.exports = {
                     case -1:
                     default:
                         permaclog('Cancelling installation.');
-                        process.exit();
+                        this.exit();
                 }*/
             }
 
-            if(this._installationConfirmed === true || readlineSync.keyInYN('Are you sure you want to install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
+            if(!installAllowed) {
+                this.notifyAwaitingInput();
+                installAllowed = readlineSync.keyInYN('Are you sure you want to install to: '+installationDirectory+'?');
+            }
+
+            if(installAllowed) {
                 this._installationConfirmed = true;
                 // Ensure directory is created (recursive)
                 if(installationMode == 'wipe') {
@@ -180,12 +186,12 @@ module.exports = {
                     lib.wipeDirectory(installationDirectory);
                     if(! lib.isDirectoryEmpty(installationDirectory)) { // If directory is still not empty
                         permaclog('Directory is not empty. Failed to wipe the installation directory: '+installationDirectory);
-                        process.exit(1); // Then exit program
+                        this.exit(1); // Then exit program
                     }
                 }
             } else {
                 permaclog('Cancelling installation.');
-                process.exit(1);
+                this.exit(1);
             }
 
             /*if(readlineSync.keyInYN('Are you sure you want to '+installationMode+' and install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
@@ -197,21 +203,26 @@ module.exports = {
                 return;
             } else {
                 permaclog('Cancelling installation.');
-                process.exit(1);
+                this.exit(1);
             }*/
         } else {
-            if(this._installationConfirmed === true || readlineSync.keyInYN('Are you sure you want to install to: '+installationDirectory+'?')) { // Ask the user if they are sure they want to install to __________
+            if(!installAllowed) {
+                this.notifyAwaitingInput();
+                installAllowed = readlineSync.keyInYN('Are you sure you want to install to: '+installationDirectory+'?');
+            }
+
+            if(installAllowed) {
                 this._installationConfirmed = true;
                 permaclog('Attempting to create the installation directory: '+installationDirectory);
                 // Ensure directory is created (recursive)
                 mkdirp.sync(installationDirectory);
                 if(! fs.existsSync(installationDirectory)) { // If directory fails to create
                     permaclog('Failed to created the installation directory: '+installationDirectory);
-                    process.exit(1); // Then exit program
+                    this.exit(1); // Then exit program
                 }
             } else {
                 permaclog('Cancelling installation. Directory creation skipped so installation directory does not exist.');
-                process.exit(1); // Exit program
+                this.exit(1); // Exit program
             }
         }
     },
@@ -232,7 +243,7 @@ module.exports = {
     _validateSourceDirectory: function(directory) {
         if(! fs.existsSync(directory)) {
             permaclog('The source directory could not be found: '+directory);
-            process.exit(1);
+            this.exit(1);
         }
     },
     _resolve: function(a, b) {
@@ -290,12 +301,12 @@ module.exports = {
 
         if(! lib.isArray(mumc.install.map)) {
             permaclog('Invalid mum.json configuration : The install.map property must be an array<object>{source:<string>, destination:<string>}.');
-            process.exit(1);
+            this.exit(1);
         }
 
         if(! lib.isObject(mumc.install.scripts)) {
             permaclog('Invalid mum.json configuration : The install.scripts property must be an <object>{beforeInstall:<array><string>, beforeSync:<array><string> afterSync:<array><string>, afterInstall:<array><string>, cleanup:<array><string>}.');
-            process.exit(1);
+            this.exit(1);
         }
 
         if(typeof(mumc.install.scripts.beforeInstall) == 'undefined') {
@@ -320,27 +331,27 @@ module.exports = {
 
         if(! lib.isArray(mumc.install.scripts.beforeInstall)) {
             permaclog('Invalid mum.json configuration : The install.scripts.beforeInstall property must be an array<string>.');
-            process.exit(1);
+            this.exit(1);
         }
 
         if(! lib.isArray(mumc.install.scripts.beforeSync)) {
             permaclog('Invalid mum.json configuration : The install.scripts.beforeSync property must be an array<string>.');
-            process.exit(1);
+            this.exit(1);
         }
 
         if(! lib.isArray(mumc.install.scripts.afterSync)) {
             permaclog('Invalid mum.json configuration : The install.scripts.afterSync property must be an array<string>.');
-            process.exit(1);
+            this.exit(1);
         }
 
         if(! lib.isArray(mumc.install.scripts.afterInstall)) {
             permaclog('Invalid mum.json configuration : The install.scripts.afterInstall property must be an array<string>.');
-            process.exit(1);
+            this.exit(1);
         }
 
         if(! lib.isArray(mumc.install.scripts.cleanup)) {
             permaclog('Invalid mum.json configuration : The install.scripts.cleanup property must be an array<string>.');
-            process.exit(1);
+            this.exit(1);
         }
 
         // Add the before install scripts to the options
@@ -449,11 +460,11 @@ module.exports = {
 
         if(baseLevel) {
             this._runSyncProcess(o);
-            return null;
-        }
 
-        if(callback instanceof Function) {
-            callback();
+            if(callback instanceof Function) {
+                callback();
+            }
+            return null;
         }
 
         return o;
@@ -480,7 +491,7 @@ module.exports = {
         function handleExtractionError(error) {
             permaclog(error);
             permaclog('Could not extract the archive: '+archiveFile);
-            process.exit(1);
+            this.exit(1);
         }
 
         function afterExtraction() {
@@ -566,7 +577,7 @@ module.exports = {
             //lib.wipeDirectory(cacheDirectory);
             if(! mkdirp.sync(cacheDirectory)) {
                 permaclog('Could not create clone target directory: '+cacheDirectory);
-                process.exit(1);
+                this.exit(1);
             }
         }
 
@@ -582,7 +593,7 @@ module.exports = {
             // Try cloning the target repository
             if(!this._cloneRepository(repositoryUrl, cacheDirectory)) {
                 permaclog('Could not clone repository: ' + repositoryUrl);
-                process.exit(1);
+                this.exit(1);
             }
         }
 
@@ -676,7 +687,7 @@ module.exports = {
                 installType = 'file';
             } else if(stats.isSymbolicLink()) {
                 permaclog('Mum does not currently support installing from symbolic links.');
-                process.exit(1);
+                this.exit(1);
             }
         } catch(e) {
             installType = 'repository';
@@ -721,7 +732,7 @@ module.exports = {
                 } catch (e) {
                     permaclog(e.stdout);
                     permaclog(e.message);
-                    process.exit(1);
+                    this.exit(1);
                 }
             });
         });
@@ -743,7 +754,7 @@ module.exports = {
                 } catch (e) {
                     permaclog(e.stdout);
                     permaclog(e.message);
-                    process.exit(1);
+                    this.exit(1);
                 }
             });
         });
@@ -783,7 +794,7 @@ module.exports = {
                     } catch(e) {
                         permaclog(e.stdout);
                         permaclog(e.message);
-                        process.exit(1);
+                        this.exit(1);
                     }
                 });
             });
@@ -794,30 +805,33 @@ module.exports = {
     update: function(clean) {
         if(!fs.existsSync('./mumi.json')) {
             permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
-            process.exit(1);
+            this.exit(1);
         }
 
         var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
         if(!lib.isObject(mumi)) {
             permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
-            process.exit(1);
+            this.exit(1);
         }
 
+        var self = this;
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
-        this.install(mumi.source, mumi.installTo, clean);
+        this.install(mumi.source, mumi.installTo, clean, undefined, function() {
+            self.notifySuccess();
+        });
     },
     runDebugOperations: function() {
         this._disableSourceUpdates = true; // Disable source updates for current debugging operations
 
         if(!fs.existsSync('./mumi.json')) {
             permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
-            process.exit(1);
+            this.exit(1);
         }
 
         var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
         if(!lib.isObject(mumi)) {
             permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
-            process.exit(1);
+            this.exit(1);
         }
 
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
@@ -825,5 +839,44 @@ module.exports = {
     },
     reset: function() {
         this._baseLevelInstallationDirectory = null;
+    },
+    exit: function(errorCode) {
+        if(!errorCode) {
+
+        } else {
+            clog('ERROR; CODE: '+errorCode);
+            this.ding();
+            this.wait(500);
+            this.ding();
+            this.wait(500);
+            this.ding();
+        }
+        process.exit(errorCode);
+    },
+    notifySuccess: function() {
+        clog('SUCCESS!');
+        this.ding(1);
+    },
+    notifyAwaitingInput: function() {
+        this.ding(2);
+    },
+    notifyError: function() {
+        this.ding(3);
+    },
+    wait: function(milliseconds) {
+        var targetTime = new Date(new Date().getTime() + milliseconds);
+        while(targetTime > new Date()){
+            // Do nothing, just keep looping until the specified time has elapsed.
+        }
+    },
+    ding: function(numberOfTimes) {
+        if(numberOfTimes === undefined) {
+            numberOfTimes = 1;
+        }
+        while(numberOfTimes > 0) {
+            child_process.execSync('tput bel', {stdio: 'inherit'});
+            this.wait(50);
+            numberOfTimes--;
+        }
     }
 };

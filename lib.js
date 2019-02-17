@@ -15,7 +15,7 @@ module.exports = {
     },
 
     readCommandInput: function(commands) {
-        var cli = cla([
+        var o = cla([
             {
                 name: 'rawArgs',
                 alias: 'a',
@@ -24,8 +24,6 @@ module.exports = {
                 defaultOption: true
             }
         ]);
-
-        var o = cli.parse();
 
         this.clog(o);
 

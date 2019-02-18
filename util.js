@@ -494,7 +494,7 @@ module.exports = {
         function handleExtractionError(error) {
             permaclog(error);
             permaclog('Could not extract the archive: '+archiveFile);
-            this.exit(1);
+            self.exit(1);
         }
 
         function afterExtraction() {
@@ -736,7 +736,7 @@ module.exports = {
                 } catch (e) {
                     permaclog(e.stdout);
                     permaclog(e.message);
-                    this.exit(1);
+                    self.exit(1);
                 }
             });
         });
@@ -758,7 +758,7 @@ module.exports = {
                 } catch (e) {
                     permaclog(e.stdout);
                     permaclog(e.message);
-                    this.exit(1);
+                    self.exit(1);
                 }
             });
         });
@@ -798,7 +798,7 @@ module.exports = {
                     } catch(e) {
                         permaclog(e.stdout);
                         permaclog(e.message);
-                        this.exit(1);
+                        self.exit(1);
                     }
                 });
             });

@@ -1,0 +1,14 @@
+
+Usage:  mum <command>
+
+where <command> is one of:
+    install, update, debug, help
+
+mum <command> -h    quick help on <command>
+
+Specify configs in the JSON formatted file:
+    <path>/mumi.json
+where <path> is the location you want to run
+mum update commands from.
+
+See config help via: mum help config

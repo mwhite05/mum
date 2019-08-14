@@ -1,0 +1,5 @@
+#! /bin/bash
+
+# Prerequisite is to run ./basic first
+
+node ../mum.js

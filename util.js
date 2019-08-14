@@ -37,7 +37,7 @@ module.exports = {
             map: [
                 {
                     source: './',
-                    installTo: './'
+                    target: './',
                 }
             ],
             scripts: {
@@ -63,7 +63,7 @@ module.exports = {
     _defaultMumDependency: {
         name: null,
         source: null,
-        installTo: null,
+        target: null,
         config: {}
     },
     disableSync: false,
@@ -267,6 +267,7 @@ module.exports = {
             permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
             this.exit(1);
         }
+        this._mumi = this._legacySupport_convert_installTo_into_target(this._mumi);
         return this._mumi;
     },
     updateMumiJson: function(newVersion) {
@@ -319,6 +320,12 @@ module.exports = {
             mkdirp.sync(mumDirectory);
         }
         return mumDirectory;
+    },
+    _legacySupport_convert_installTo_into_target: function(obj) {
+        if(obj.installTo) {
+            obj.target = obj.installTo;
+        }
+        return obj;
     },
     installFromDirectory: function(sourceDirectory, installationDirectory, clean, o, callback, meta) {
         var self = this;
@@ -437,14 +444,15 @@ module.exports = {
         if(mumc.dependencies.length) {
             mumc.dependencies.forEach(function(dependency, index) {
                 var dep = extend({}, self._defaultMumDependency, dependency);
-                if(dep.installTo[0] == '.') {
-                    dep.installTo = installationDirectory+'/'+dep.installTo;
+                dep = self._legacySupport_convert_installTo_into_target(dep);
+                if(dep.target[0] === '.') {
+                    dep.target = installationDirectory+'/'+dep.target;
                 }
                 if(dep.name) {
                     o.name = dep.name;
                 }
                 // Add returned options to an array of returned options for all dependencies
-                self.install(dep.source, dep.installTo, false, o);
+                self.install(dep.source, dep.target, false, o);
                 /*// loop over the tmpO and merge with o
                 tmpO.beforeInstall.forEach(function(value, index) {
                     o.beforeInstall.unshift(value);
@@ -488,29 +496,30 @@ module.exports = {
         if(!mumc.install.map.length) {
             o.maps.unshift({
                 source: sourceDirectory,
-                installTo: installationDirectory,
+                target: installationDirectory,
                 exclude: []
             });
         } else {
             // loop over each item in the installMap
             mumc.install.map.forEach(function(value, index) {
+                value = self._legacySupport_convert_installTo_into_target(value);
                 // resolve the path for source
                 var source = self._resolve(sourceDirectory, value.source);
                 // resolve the path for destination
-                var destination = self._resolve(installationDirectory, value.installTo);
+                var target = self._resolve(installationDirectory, value.target);
 
                 // Verify source
                 self._validateSourceDirectory(source);
 
                 // Create destination if required
-                if(!fs.existsSync(destination)) {
-                    mkdirp.sync(destination);
+                if(!fs.existsSync(target)) {
+                    mkdirp.sync(target);
                 }
 
                 // add this source and destination to the list of locations to sync
                 o.maps.push({
                     source: source,
-                    installTo: destination,
+                    target: target,
                     excludes: value.excludes
                 });
             });
@@ -728,7 +737,7 @@ module.exports = {
             // Write the mumi.json file
             var mumi = {
                 source: source,
-                installTo: target
+                target: target
             };
 
             if(!fs.existsSync(this._baseLevelInstallationDirectory)) {
@@ -744,7 +753,7 @@ module.exports = {
             if(!fs.existsSync(mumCacheDir)) {
                 mkdirp.sync(mumCacheDir);
             }
-            fs.writeFileSync(mumCacheDir+'/install_to', mumi.installTo);
+            fs.writeFileSync(mumCacheDir+'/install_to', mumi.target);
         }
 
         try {
@@ -785,7 +794,7 @@ module.exports = {
         var cwd = process.cwd();
         o.beforeInstall.forEach(function(value, index) {
             value.scripts.forEach(function(scriptFile, index) {
-                var scriptFile = self._resolve(value.directory, scriptFile);
+                scriptFile = self._resolve(value.directory, scriptFile);
                 permaclog('Setting permissions on and attempting to run: '+scriptFile);
                 var scriptDir = path.dirname(scriptFile);
                 permaclog('Switching directories to: '+scriptDir);
@@ -807,7 +816,7 @@ module.exports = {
 
         o.beforeSync.forEach(function(value, index) {
             value.scripts.forEach(function(scriptFile, index) {
-                var scriptFile = self._resolve(value.directory, scriptFile);
+                scriptFile = self._resolve(value.directory, scriptFile);
                 permaclog('Setting permissions on and attempting to run: '+scriptFile);
                 var scriptDir = path.dirname(scriptFile);
                 permaclog('Switching directories to: '+scriptDir);
@@ -829,8 +838,9 @@ module.exports = {
         process.chdir(cwd);
 
         o.maps.forEach(function(value, index) {
+            value = self._legacySupport_convert_installTo_into_target(value);
             // sync source to destination
-            lib.overlayFilesRecursive(value.source, value.installTo, value.excludes, true);
+            lib.overlayFilesRecursive(value.source, value.target, value.excludes, true);
         });
         var scriptSets = ['afterSync', 'afterInstall', 'cleanup'];
 
@@ -847,7 +857,7 @@ module.exports = {
             permaclog('Running script set: ' + scriptSetName + '.');
             scriptSet.forEach(function(value, index) {
                 value.scripts.forEach(function(scriptFile, index) {
-                    var scriptFile = self._resolve(value.directory, scriptFile);
+                    scriptFile = self._resolve(value.directory, scriptFile);
                     permaclog('Setting permissions on and attempting to run: ' + scriptFile);
                     var scriptDir = path.dirname(scriptFile);
                     permaclog('Switching directories to: ' + scriptDir);
@@ -875,7 +885,7 @@ module.exports = {
 
         var self = this;
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
-        this.install(mumi.source, mumi.installTo, clean, undefined, function() {
+        this.install(mumi.source, mumi.target, clean, undefined, function() {
             self.notifySuccess();
         });
     },
@@ -885,7 +895,7 @@ module.exports = {
         var mumi = this.getMumiData();
 
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
-        this.install(mumi.source, mumi.installTo, false);
+        this.install(mumi.source, mumi.target, false);
     },
     reset: function() {
         this._baseLevelInstallationDirectory = null;
@@ -931,5 +941,9 @@ module.exports = {
             this.wait(50);
             numberOfTimes--;
         }
+    },
+    printHelp: function(helpDocName) {
+        const doc = fs.readFileSync(__dirname+'/help-docs/'+helpDocName+'.txt');
+        permaclog(doc);
     }
 };

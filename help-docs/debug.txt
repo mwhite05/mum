@@ -1,0 +1,6 @@
+
+Usage:  mum debug
+
+This is a special command that is reserved for mum development cycles to allow easier testing of miscellaneous operations during development.
+
+It is not intended for use outside of development.

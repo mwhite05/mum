@@ -1,0 +1,15 @@
+
+Usage:  mum install <source> <target> [-c] [-q] [-y]
+
+<source>    Required. Can be a directory, zip file, or git repository URL*.
+<target>    Required. The target directory in which to install the source. Note: The source is allowed to create mappings and scripts that may install elements outside of this target directory.
+
+-c  --clean     Clean install. Completely wipe the target directory contents before running the installation process.
+-q  --quiet     Silence the terminal bell sounds produced at user prompts and when installation fails or succeeds.
+-y  --yes       Run the installation while automatically answering yes to all confirmation prompts.
+
+* The git repository URL may be followed by a commit-ish using the format:
+
+<url>#<commit-ish>
+
+where <commit-ish> is the name of a branch or tag, or a SHA1 hash of a specific commit within the repository.

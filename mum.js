@@ -16,6 +16,7 @@ const lib = require('./lib.js');
 const util = require('./util.js');
 const clog = lib.clog;
 const permaclog = lib.clog;
+const commandLineArgs = require('command-line-args');
 
 var packageConfigFilePath = __dirname+'/package.json';
 var packageConfig;
@@ -79,40 +80,59 @@ const commands = {
     debug: []
 };
 
-// Parse the command line arguments/commands
-var command = lib.readCommandInput(commands);
+const mainOptions = commandLineArgs([
+    {
+        name: 'command',
+        defaultOption: true
+    }
+], {stopAtFirstUnknown: true});
 
-switch (command.name) {
-    case 'help':
-        // todo - write complete help docs
-        permaclog('Usage examples: ');
-        permaclog('');
-        permaclog('# mum install <folder> <installTargetFolder>');
-        permaclog('# mum install <zipFile> <installTargetFolder>');
-        permaclog('# mum install <repoUrl#branch|tag|hash> <installTargetFolder>');
-        permaclog('# mum update <branch|tag|hash>');
-        permaclog('# mum update');
-        permaclog('# mum update disableSync');
-        permaclog('# mum update ds');
-        break;
+// Now parse the options of each individual command
+switch (mainOptions.command) {
     case 'install':
-        // For readability, print a couple blank lines
-        permaclog('');
-        permaclog('');
-        var clean = (command.args.clean == 'clean');
-        if(clean === true) {
-            permaclog('-- RUNNING AS CLEAN INSTALL --');
-            permaclog('');
-            permaclog('');
-            permaclog('');
+        const installOptions = commandLineArgs([
+            {
+                name: 'sourceAndTarget',
+                multiple: true,
+                defaultOption: true,
+                type: String
+            },
+            {
+                name: 'clean',
+                alias: 'c',
+                type: Boolean
+            },
+            {
+                name: 'quiet',
+                alias: 'q',
+                type: Boolean
+            },
+            {
+                name: 'yes',
+                alias: 'y',
+                type: Boolean
+            }
+        ], {stopAtFirstUnknown: true, argv: mainOptions._unknown || []});
+        if(installOptions.sourceAndTarget.length < 2) {
+            permaclog("\nYou must specify both the source and target arguments:\nUsage:\n mum install <source> <target> [-ycq]\nFor more details, run:\nmum -h install");
+            util.exit(1);
         }
-        util.install(command.args.source, command.args.installationDirectory, clean, null, function() {
+        if(installOptions.yes === true) {
+            util.confirmInstallation();
+        }
+        if(installOptions.quiet === true) {
+            util.silenceTheBell();
+        }
+        util.install(installOptions.sourceAndTarget[0], installOptions.sourceAndTarget[1], installOptions.clean, null, function() {
             // post-installation callback method
             util.reset();
             util.notifySuccess();
         });
+        //clog("\n\nInstall Options\n", installOptions);
         break;
-    case 'update':
+
+
+    case 'old-update':
         clog(command.args);
         if(command.args[0] == 'clean' || command.args[1] == 'clean') {
             permaclog('-- RUNNING AS CLEAN UPDATE --');
@@ -167,7 +187,36 @@ switch (command.name) {
         }
         util.update(clean);
         break;
-    case 'debug':
+    case 'old-debug':
         util.runDebugOperations();
+        break;
+    case 'old-help':
+        // todo - write complete help docs
+        permaclog('Usage examples: ');
+        permaclog('');
+        permaclog('# mum install <folder> <installTargetFolder>');
+        permaclog('# mum install <zipFile> <installTargetFolder>');
+        permaclog('# mum install <repoUrl#branch|tag|hash> <installTargetFolder>');
+        permaclog('# mum update <branch|tag|hash>');
+        permaclog('# mum update');
+        permaclog('# mum update disableSync');
+        permaclog('# mum update ds');
+        break;
+    case 'old-install':
+        // For readability, print a couple blank lines
+        permaclog('');
+        permaclog('');
+        var clean = (command.args.clean == 'clean');
+        if(clean === true) {
+            permaclog('-- RUNNING AS CLEAN INSTALL --');
+            permaclog('');
+            permaclog('');
+            permaclog('');
+        }
+        util.install(command.args.source, command.args.installationDirectory, clean, null, function() {
+            // post-installation callback method
+            util.reset();
+            util.notifySuccess();
+        });
         break;
 }

@@ -1,8 +1,9 @@
 'use strict';
 const fs = require('fs');
-const unzip = require('unzip2');
-const zlib = require('zlib');
-const targz = require('tar.gz');
+//noinspection SpellCheckingInspection
+const unzipper = require('unzipper');
+//const zlib = require('zlib');
+const tar = require('tar');
 const sha1 = require('sha1');
 const URL = require('url');
 const mkdirp = require('mkdirp');
@@ -13,6 +14,7 @@ const child_process = require('child_process');
 const readlineSync = require('readline-sync');
 //const cla = require('command-line-args');
 const clog = lib.clog;
+//noinspection SpellCheckingInspection
 const permaclog = lib.clog;
 
 /* RULES:
@@ -26,6 +28,7 @@ const permaclog = lib.clog;
 module.exports = {
     _disableSourceUpdates: false,
     _installationConfirmed: false,
+    _bellEnabled: true,
     _baseLevelInstallationDirectory: null,
     _defaultMumConfig: {
         name: null,
@@ -150,6 +153,12 @@ module.exports = {
         var commitIsh = parts.hash.replace('#', ''); // get the commit-ish (npm term) from the end of the url
         return commitIsh ? commitIsh : 'master';
     },
+    confirmInstallation: function() {
+        this._installationConfirmed = true;
+    },
+    silenceTheBell: function() {
+        this._bellEnabled = false;
+    },
     _prepareInstallationDirectory: function(installationDirectory, clean) {
         if(this.disableSync === true) {
             clean = false;
@@ -184,7 +193,7 @@ module.exports = {
             if(installAllowed) {
                 this._installationConfirmed = true;
                 // Ensure directory is created (recursive)
-                if(installationMode == 'wipe') {
+                if(installationMode === 'wipe') {
                     permaclog('Attempting to wipe the installation directory: '+path.resolve(installationDirectory));
                     lib.wipeDirectory(installationDirectory);
                     if(! lib.isDirectoryEmpty(installationDirectory)) { // If directory is still not empty
@@ -532,18 +541,27 @@ module.exports = {
             case '.tar':
             case '.tgz':
             case '.gz':
-                // (npm tar.gz)
-                targz().extract(archiveFile, cacheDirectory, function(err) {
+                // (npm tar)
+                clog('file  for extract: '+archiveFile);
+                clog('directory for extract: '+cacheDirectory);
+                if(!fs.existsSync(cacheDirectory) && !mkdirp.sync(cacheDirectory)) {
+                    permaclog('Could not create tar extraction target directory: '+cacheDirectory);
+                    this.exit(1);
+                }
+                tar.extract({file: archiveFile, cwd: cacheDirectory, preservePaths: true}).then(function(err) {
                     if(err) {
                         handleExtractionError(err);
                     } else {
                         afterExtraction();
                     }
+                }).catch(function(e) {
+                    clog('Error caught in catch');
+                    clog(e);
                 });
                 break;
             case '.zip':
-                // (npm unzip2)
-                fs.createReadStream(archiveFile).pipe(unzip.Extract({path: cacheDirectory})).on('error', handleExtractionError).on('close', afterExtraction);
+                // (npm unzipper)
+                fs.createReadStream(archiveFile).pipe(unzipper.Extract({path: cacheDirectory})).on('error', handleExtractionError).on('close', afterExtraction);
                 break;
             default:
                 permaclog('Unknown archive file type: '+archiveExtension);
@@ -874,6 +892,9 @@ module.exports = {
         }
     },
     ding: function(numberOfTimes) {
+        if(!this._bellEnabled) {
+            return;
+        }
         if(numberOfTimes === undefined) {
             numberOfTimes = 1;
         }

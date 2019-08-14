@@ -1,10 +1,9 @@
 'use strict';
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-const handlebars = require('handlebars');
+//const handlebars = require('handlebars');
 const path = require('path');
 const child_process = require('child_process');
-const cla = require('command-line-args');
 const util = require('util');
 
 module.exports = {
@@ -12,44 +11,6 @@ module.exports = {
     error: function(errorMessage, errorCode) {
         this.clog('Error['+errorCode+']: '+errorMessage);
         util.exit(errorCode);
-    },
-
-    readCommandInput: function(commands) {
-        var o = cla([
-            {
-                name: 'rawArgs',
-                alias: 'a',
-                type: String,
-                multiple: true,
-                defaultOption: true
-            }
-        ]);
-
-        this.clog(o);
-
-        if(! this.isArray(o.rawArgs) || ! o.rawArgs.length) {
-            this.error('No arguments provided. At least one argument (the command name) must be provided. Expected: mum <command>', 0);
-        }
-
-        var command = o.rawArgs.shift();
-        if(! commands.hasOwnProperty(command)) {
-            var commandNames = [];
-            for(var commandName in commands) {
-                if(commands.hasOwnProperty(commandName)) {
-                    commandNames.push(commandName);
-                }
-            }
-            this.error('Invalid command: `'+command+'`. Expected one of ['+commandNames.join(', ')+']', 0);
-        }
-
-        if(! this.isArray(commands[command])) {
-            this.error('Command descriptor object for `'+command+'` is not an array.', 0);
-        }
-
-        return {
-            name: command,
-            args: this._mapArgsToObject(o.rawArgs, commands[command], command)
-        };
     },
 
     _mapArgsToObject: function(args, argsMap, command) {
@@ -75,7 +36,6 @@ module.exports = {
             }
             o[arg.name] = args[index];
         });
-
 
         return o;
     },

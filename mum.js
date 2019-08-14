@@ -155,8 +155,7 @@ switch (mainOptions.command) {
                 defaultValue: false
             }
         ], {stopAtFirstUnknown: true, argv: mainOptions._unknown || []});
-        clog('main options', mainOptions);
-        clog('update options', updateOptions);
+
         if(updateOptions.yes === true) {
             util.confirmInstallation();
         }
@@ -179,6 +178,7 @@ switch (mainOptions.command) {
         util.runDebugOperations();
         break;
     case 'help':
+    default:
         const helpOptions = commandLineArgs([
             {
                 name: 'system',
@@ -187,10 +187,17 @@ switch (mainOptions.command) {
                 type: String
             }
         ], {stopAtFirstUnknown: true, argv: mainOptions._unknown || []});
-        if(helpOptions.system === '') {
-            util.printHelp('help');
-        } else {
-            util.printHelp(helpOptions.system);
+        switch(helpOptions.system) {
+            case 'install':
+            case 'update':
+            case 'config':
+            case 'debug':
+                util.printHelp(helpOptions.system);
+                break;
+            case '':
+            default:
+                util.printHelp('help');
+                break;
         }
         break;
 }

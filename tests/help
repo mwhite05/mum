@@ -2,4 +2,4 @@
 
 # Prerequisite is to run ./basic first
 
-node ../mum.js
+node ../mum.js install -h

@@ -74,7 +74,7 @@ module.exports = {
     */
     _cloneRepository: function(repositoryUrl, cloneTargetDirectory) {
         if(this.disableSync === true) {
-            clog('Skipping clone of repository: '+repositoryUrl+ ' to: '+cloneTargetDirectory);
+            permaclog('Skipping clone of repository: '+repositoryUrl+ ' to: '+cloneTargetDirectory);
             return true;
         }
         lib.wipeDirectory(cloneTargetDirectory);
@@ -94,7 +94,7 @@ module.exports = {
     },
     _checkOutCommitIsh: function(repositoryPath, commitIsh) {
         if(this.disableSync === true) {
-            clog('Skipping checkout of commitIsh: '+commitIsh+ ' on: '+repositoryPath);
+            permaclog('Skipping checkout of commitIsh: '+commitIsh+ ' on: '+repositoryPath);
             return true;
         }
         // If the hash, branch or tag is not present then it will return a fatal error and disconnect
@@ -121,7 +121,7 @@ module.exports = {
     },
     _updateLocalRepository: function(repositoryPath, commitIsh) {
         if(this.disableSync === true) {
-            clog('Skipping local repository update for commitIsh: '+commitIsh+ ' on: '+repositoryPath);
+            permaclog('Skipping local repository update for commitIsh: '+commitIsh+ ' on: '+repositoryPath);
             return true;
         }
         // If the hash, branch or tag is not present then it will return a fatal error and disconnect
@@ -291,8 +291,6 @@ module.exports = {
         if(sourceType === 'repository') {
             var repositoryUrlParts = URL.parse(mumi.source);
             mumi.source = repositoryUrlParts.path + newVersion;
-            clog(repositoryUrlParts);
-            clog('new source: ' + mumi.source);
             fs.writeFileSync('./mumi.json', JSON.stringify(mumi, null, "\t"));
         } else {
             permaclog('Unable to switch commit-ish. mumi.json source is not a repository URL.');
@@ -597,8 +595,6 @@ module.exports = {
             case '.tgz':
             case '.gz':
                 // (npm tar)
-                clog('file  for extract: '+archiveFile);
-                clog('directory for extract: '+cacheDirectory);
                 if(!fs.existsSync(cacheDirectory) && !mkdirp.sync(cacheDirectory)) {
                     permaclog('Could not create tar extraction target directory: '+cacheDirectory);
                     this.exit(1);
@@ -610,8 +606,8 @@ module.exports = {
                         afterExtraction();
                     }
                 }).catch(function(e) {
-                    clog('Error caught in catch');
-                    clog(e);
+                    permaclog('Unable to extract the file: '+archiveFile+' to: '+cacheDirectory);
+                    permaclog(e);
                 });
                 break;
             case '.zip':
@@ -904,7 +900,7 @@ module.exports = {
         if(!errorCode) {
 
         } else {
-            clog('ERROR; CODE: '+errorCode);
+            permaclog('ERROR; CODE: '+errorCode);
             this.ding();
             this.wait(500);
             this.ding();
@@ -914,7 +910,7 @@ module.exports = {
         process.exit(errorCode);
     },
     notifySuccess: function() {
-        clog('SUCCESS!');
+        permaclog('SUCCESS!');
         this.ding(1);
     },
     notifyAwaitingInput: function() {

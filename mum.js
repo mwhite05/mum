@@ -66,8 +66,20 @@ const mainOptions = commandLineArgs([
         alias: 'h',
         type: Boolean,
         defaultValue: false
+    },
+    {
+        name: 'version',
+        alias: 'v',
+        type: Boolean,
+        defaultValue: false
     }
 ], {stopAtFirstUnknown: true});
+
+// Check if they are asking for version info. If so, only give them that.
+if(mainOptions.version === true) {
+    permaclog("mum "+props.packageConfig.version+"\n\nCopyright (c) 2016-2019 Michael White");
+    util.exit(0);
+}
 
 // Manipulate the options to make it think the help command was used (centralizes our help handling to a single case statement)
 if(mainOptions.help === true) {

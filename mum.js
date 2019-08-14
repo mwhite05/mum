@@ -100,17 +100,20 @@ switch (mainOptions.command) {
             {
                 name: 'clean',
                 alias: 'c',
-                type: Boolean
+                type: Boolean,
+                defaultValue: false
             },
             {
                 name: 'quiet',
                 alias: 'q',
-                type: Boolean
+                type: Boolean,
+                defaultValue: false
             },
             {
                 name: 'yes',
                 alias: 'y',
-                type: Boolean
+                type: Boolean,
+                defaultValue: false
             }
         ], {stopAtFirstUnknown: true, argv: mainOptions._unknown || []});
         if(installOptions.sourceAndTarget.length < 2) {
@@ -130,7 +133,60 @@ switch (mainOptions.command) {
         });
         //clog("\n\nInstall Options\n", installOptions);
         break;
-
+    case 'update':
+        const updateOptions = commandLineArgs([
+            {
+                name: 'version',
+                alias: 'v',
+                defaultOption: true,
+                defaultValue: '',
+                type: String
+            },
+            {
+                name: 'disableSync',
+                alias: 'S',
+                type: Boolean,
+                defaultValue: false
+            },
+            {
+                name: 'clean',
+                alias: 'c',
+                type: Boolean,
+                defaultValue: false
+            },
+            {
+                name: 'quiet',
+                alias: 'q',
+                type: Boolean,
+                defaultValue: false
+            },
+            {
+                name: 'yes',
+                alias: 'y',
+                type: Boolean,
+                defaultValue: false
+            }
+        ], {stopAtFirstUnknown: true, argv: mainOptions._unknown || []});
+        clog('main options', mainOptions);
+        clog('update options', updateOptions);
+        if(updateOptions.yes === true) {
+            util.confirmInstallation();
+        }
+        if(updateOptions.quiet === true) {
+            util.silenceTheBell();
+        }
+        if(updateOptions.disableSync === true) {
+            util.disableSync = true;
+            lib.disableSync = true;
+        }
+        if(updateOptions.version) {
+            if(updateOptions.version[0] !== '#') {
+                updateOptions.version = '#' + updateOptions.version;
+            }
+            util.updateMumiJson(updateOptions.version);
+        }
+        util.update(updateOptions.clean);
+        break;
 
     case 'old-update':
         clog(command.args);
@@ -144,45 +200,6 @@ switch (mainOptions.command) {
             } else if(command.args[0][0] != '#') {
                 command.args[0] = '#' + command.args[0];
                 updateMumiJson = true;
-            }
-
-            if(!fs.existsSync('./mumi.json')) {
-                permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
-                util.exit(1);
-            }
-
-            var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
-            if(!lib.isObject(mumi)) {
-                permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
-                util.exit(1);
-            }
-
-            var sourceType = '';
-            try {
-                var stats = fs.statSync(mumi.source);
-                if(stats.isDirectory()) {
-                    sourceType = 'directory';
-                } else if(stats.isFile()) {
-                    sourceType = 'file';
-                } else if(stats.isSymbolicLink()) {
-                    sourceType = 'symlink';
-                }
-            } catch(e) {
-                sourceType = 'repository';
-            }
-
-            // Modify the hash on the repository URL if the source is a repository URL
-            if(updateMumiJson === true) {
-                if(sourceType == 'repository') {
-                    var repositoryUrlParts = URL.parse(mumi.source);
-                    mumi.source = repositoryUrlParts.path + command.args[0];
-                    clog(repositoryUrlParts);
-                    clog('new source: ' + mumi.source);
-                    fs.writeFileSync('./mumi.json', JSON.stringify(mumi, null, "\t"));
-                } else {
-                    permaclog('Unable to switch commit-ish. mumi.json source is not a repository URL.');
-                    util.exit(1);
-                }
             }
         }
         util.update(clean);

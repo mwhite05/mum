@@ -1,3 +1,6 @@
 #! /bin/bash
 
-node ../mum.js update #4.0
+# Prerequisite is to run ./basic first
+
+cd www
+node ../../mum.js update advanced -cyq

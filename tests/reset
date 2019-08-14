@@ -1,3 +1,7 @@
 #! /bin/bash
 
 rm -rf ./www/* ./www/.mum
+
+mkdir ./www/html ./www/html/depth
+touch ./www/html/junk.txt
+touch ./www/html/depth/junk.txt

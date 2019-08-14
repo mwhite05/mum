@@ -26,6 +26,7 @@ const permaclog = lib.clog;
 */
 
 module.exports = {
+    _mumi: null,
     _disableSourceUpdates: false,
     _installationConfirmed: false,
     _bellEnabled: true,
@@ -251,6 +252,51 @@ module.exports = {
         mumc = extend({}, this._defaultMumConfig, mumc);
 
         return mumc;
+    },
+    getMumiData: function() {
+        if(this._mumi) {
+            return this._mumi;
+        }
+        if(!fs.existsSync('./mumi.json')) {
+            permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
+            this.exit(1);
+        }
+
+        this._mumi = JSON.parse(fs.readFileSync('./mumi.json'));
+        if(!lib.isObject(this._mumi)) {
+            permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
+            this.exit(1);
+        }
+        return this._mumi;
+    },
+    updateMumiJson: function(newVersion) {
+        var mumi = this.getMumiData();
+
+        var sourceType = '';
+        try {
+            var stats = fs.statSync(mumi.source);
+            if(stats.isDirectory()) {
+                sourceType = 'directory';
+            } else if(stats.isFile()) {
+                sourceType = 'file';
+            } else if(stats.isSymbolicLink()) {
+                sourceType = 'symlink';
+            }
+        } catch(e) {
+            sourceType = 'repository';
+        }
+
+        // Modify the hash on the repository URL if the source is a repository URL
+        if(sourceType === 'repository') {
+            var repositoryUrlParts = URL.parse(mumi.source);
+            mumi.source = repositoryUrlParts.path + newVersion;
+            clog(repositoryUrlParts);
+            clog('new source: ' + mumi.source);
+            fs.writeFileSync('./mumi.json', JSON.stringify(mumi, null, "\t"));
+        } else {
+            permaclog('Unable to switch commit-ish. mumi.json source is not a repository URL.');
+            this.exit(1);
+        }
     },
     _validateSourceDirectory: function(directory) {
         if(! fs.existsSync(directory)) {
@@ -825,16 +871,7 @@ module.exports = {
         process.chdir(cwd);
     },
     update: function(clean) {
-        if(!fs.existsSync('./mumi.json')) {
-            permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
-            this.exit(1);
-        }
-
-        var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
-        if(!lib.isObject(mumi)) {
-            permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
-            this.exit(1);
-        }
+        var mumi = this.getMumiData();
 
         var self = this;
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
@@ -845,16 +882,7 @@ module.exports = {
     runDebugOperations: function() {
         this._disableSourceUpdates = true; // Disable source updates for current debugging operations
 
-        if(!fs.existsSync('./mumi.json')) {
-            permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
-            this.exit(1);
-        }
-
-        var mumi = JSON.parse(fs.readFileSync('./mumi.json'));
-        if(!lib.isObject(mumi)) {
-            permaclog('Unable to update. mumi.json contents are not a valid JSON object.');
-            this.exit(1);
-        }
+        var mumi = this.getMumiData();
 
         // Just run the install again. Installation is smart enough now to skip cloning if it already has a local clone available.
         this.install(mumi.source, mumi.installTo, false);

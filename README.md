@@ -145,6 +145,10 @@ These instructions are not yet available. If you know what this process should b
 
 <h3 id="basic-usage">Basic usage</h3>
 
+`mum <command>`
+
+You can view help for mum by running `mum -h` or get help for a specific command by running `mum <command> -h`.
+
 You can use mum for simple projects without even having to create a configuration file!
 
 To install using mum you simply need to have any valid source of files for it to deploy. 
@@ -186,13 +190,13 @@ Just navigate to the directory _above_ where you installed the project and run:
 
 If you installed to `/var/www/html` then you would change directories to `cd /var/www` then run `mum update`
 
-Need to feel confident that the code is deployed in full with no extraneous files in the primary target area? Run `mum update clean`
+Need to feel confident that the code is deployed in full with no extraneous files in the primary target area? Run `mum update -c`
 
 Is it time to update to a new branch/tag/hash? Well you could manually modify the `mumi.json` file but as of 0.2.7-alpha you can run `mum update <commitish>`. Alternately run `mum update "#<commitish>"`.
 
-If you need to run a clean update and provide a new commit-ish then run: `mum update <commitish> clean` or `mum update "#<commitish>" clean`
+If you need to run a clean update and provide a new commit-ish then run: `mum update <commitish> -c` or `mum update "#<commitish>" -c`
 
-If you want to debug your installer scripts and processes, `mum update disableSync` (or `mum update ds`) is a handy command that skips all file copy, checkout, and clone operations that otherwise would have taken place. This allows you to modify your scripts without committing them for the purpose of testing and debugging.
+If you want to debug your installer scripts and processes, `mum update -S` is a handy command that skips all file copy, checkout, and clone operations that otherwise would have taken place. This allows you to modify your scripts without committing them for the purpose of testing and debugging.
 
 <h3 id="configuration">Configuration</h3>
 
@@ -215,7 +219,7 @@ You can add one or more dependencies to your project using the `dependencies` ar
     "dependencies": [
         {
             "source": "git@github.com:WordPress/WordPress.git#4.6",
-            "installTo": "./"
+            "target": "./"
         }
     ]
 }
@@ -224,7 +228,7 @@ You can add one or more dependencies to your project using the `dependencies` ar
 Each item in the `dependencies` array _must_ be an object. Every dependency object _must_ contain two properties:
 
 * **source** - The source to pull for the dependency. This can be any valid mum source type (including Git urls and paths to archive files or directories)
-* **installTo** - The target directory to install to. This can be an absolute path (starting with `/`) or a relative path (starting with `./`). If you set it to a relative path, it will be relative to the target installation directory. If you installed to `/var/www/html` then an installTo value of `./` would install the dependency to `/var/www/html` as well. 
+* **target** - The target directory to install to. This can be an absolute path (starting with `/`) or a relative path (starting with `./`). If you set it to a relative path, it will be relative to the target installation directory. If you installed to `/var/www/html` then an installTo value of `./` would install the dependency to `/var/www/html` as well. 
 * **name** - Optional - The friendly name to use for the dependency when cloning it for deployment. This is used to create a symlink in the .mum directory to the actual clone directory used by mum. If the source repository has a name property in its own mum.json configuration it will be ignored in favor of the one you define in the dependency configuration.
 
 You can have multiple dependencies:
@@ -235,11 +239,11 @@ You can have multiple dependencies:
         {
             "name": "wordpress",
             "source": "git@github.com:WordPress/WordPress.git#4.6",
-            "installTo": "./"
+            "target": "./"
         },
         {
             "source": "git@github.com:mwhite05/mum-example.git#basic",
-            "installTo": "./examples"
+            "target": "./examples"
         }
     ]
 }
@@ -259,11 +263,11 @@ If we named the repository in the above configuration example it might look like
     "dependencies": [
         {
             "source": "git@github.com:WordPress/WordPress.git#4.6",
-            "installTo": "./"
+            "target": "./"
         },
         {
             "source": "git@github.com:mwhite05/mum-example.git#basic",
-            "installTo": "./examples"
+            "target": "./examples"
         }
     ]
 }
@@ -342,7 +346,7 @@ It then tells mum to also copy everything from the `./apache` directory to the `
         "map": [
             {
                 "source": "./",
-                "installTo": "./",
+                "target": "./",
                 "excludes": [
                     "mum-scripts",
                     "apache"
@@ -350,7 +354,7 @@ It then tells mum to also copy everything from the `./apache` directory to the `
             },
             {
                 "source": "./apache",
-                "installTo": "/etc/apache2/sites-available"
+                "target": "/etc/apache2/sites-available"
             }
         ],
         "scripts": {
@@ -362,7 +366,7 @@ It then tells mum to also copy everything from the `./apache` directory to the `
     "dependencies": [
         {
             "source": "git@github.com:WordPress/WordPress.git#4.6",
-            "installTo": "./"
+            "target": "./"
         }
     ]
 }

@@ -119,7 +119,10 @@ module.exports = {
 
         return true;
     },
+    _hasCheckedForDeletedFiles: false,
+    _filePathsForRemoval: [],
     _updateLocalRepository: function(repositoryPath, commitIsh) {
+        clog('_updateLocalRepository()');
         if(this.disableSync === true) {
             permaclog('Skipping local repository update for commitIsh: '+commitIsh+ ' on: '+repositoryPath);
             return true;
@@ -128,14 +131,42 @@ module.exports = {
         var cmds = [];
         cmds.push('rm -rf *'); // Removing all files works better than just a hard reset
         cmds.push('git reset --hard');
-        cmds.push('git fetch');
-        cmds.push('git checkout "' + commitIsh+'"');
-        cmds.push('git pull');
 
         try {
             var cwd = process.cwd();
             // Change directories to the target directory (which should be home to a git repository)
             process.chdir(repositoryPath);
+            // Run the commands
+            cmds.forEach(function(cmd, index) {
+                permaclog(cmd);
+                child_process.execSync(cmd);
+            });
+
+            if(!this._hasCheckedForDeletedFiles) {
+                clog('Checking for deleted files');
+                var deletedFilesOutput = child_process.execSync('git diff HEAD origin/' + commitIsh + ' --name-only --diff-filter=DR');
+                this._filePathsForRemoval = deletedFilesOutput.toString().split("\n");
+                this._hasCheckedForDeletedFiles = true;
+            }
+
+            // Change directories back to the original working directory
+            process.chdir(cwd);
+        } catch(e) {
+            permaclog('Error encountered when resetting repository to preferred state.');
+            this.exit(1);
+            return false;
+        }
+
+        // Reset command list
+        cmds = [];
+        cmds.push('git fetch');
+        cmds.push('git checkout "' + commitIsh+'"');
+        cmds.push('git pull');
+
+        try {
+            // Change directories to the target directory (which should be home to a git repository)
+            process.chdir(repositoryPath);
+
             // Run the commands
             cmds.forEach(function(cmd, index) {
                 permaclog(cmd);
@@ -782,7 +813,41 @@ module.exports = {
                 break;
         }
     },
+    /**
+     * Deletes files from dir if basePath matches base of file path.
+     *
+     * @param dir
+     * @param files
+     * @param basePath
+     * @private
+     */
+    _deleteRelativeFiles: function(dir, files, basePath) {
+        try {
+            for(var i = 0; i < files.length; i++) {
+                if(!files.hasOwnProperty(i)) {
+                    continue;
+                }
+
+                var filePath = files[i];
+                if(!filePath) {
+                    continue;
+                }
+                if(basePath.length < 1 || filePath.substr(0, basePath.length) == basePath) {
+                    var fullPath = dir + '/' + filePath;
+                    clog('Trying to find and delete: ', fullPath);
+                    if(!fs.existsSync(fullPath)) {
+                        continue;
+                    }
+                    fs.unlinkSync(fullPath);
+                }
+            }
+        } catch(e) {
+            permaclog('Unable to delete a file that was removed in the repository: '+fullPath);
+            this.exit(1);
+        }
+    },
     _runSyncProcess: function(o) {
+        clog('_runSyncProcess');
         var self = this;
 
         process.env.MUM_CACHE_DIR = this._getMumCacheDirectory();
@@ -833,8 +898,17 @@ module.exports = {
         });
         process.chdir(cwd);
 
+        // todo - loop all file paths in this._filePathsForRemoval and delete them from the source
+        clog('Deleting unmapped files', this._baseLevelInstallationDirectory, this._filePathsForRemoval);
+        this._deleteRelativeFiles(this._baseLevelInstallationDirectory, this._filePathsForRemoval, '');
+
         o.maps.forEach(function(value, index) {
             value = self._legacySupport_convert_installTo_into_target(value);
+
+            /*// todo - loop all file paths in this._filePathsForRemoval and delete them from the target MAPPED destination.
+            clog('Deleting mapped files: ', value.target, self._filePathsForRemoval, value.source);
+            self._deleteRelativeFiles(value.target, self._filePathsForRemoval);*/
+
             // sync source to destination
             lib.overlayFilesRecursive(value.source, value.target, value.excludes, true);
         });

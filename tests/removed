@@ -1,0 +1,4 @@
+#! /bin/bash
+
+#node ../mum.js install git@github.com:mwhite05/mum-example.git#advanced ./www/html
+node ../mum.js install git@github.com:mwhite05/mum-example.git#removed-files ./www/html

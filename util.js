@@ -63,11 +63,12 @@ module.exports = {
         config: {}
     },
     disableSync: false,
+    _filePathsForRemoval: {},
     /**
-    * A commit-ish can be any of: sha-1 hash for a specific commit, branch name, tag name.
-    * If the commit-ish portion of the URL is blank or left of entirely, the default is master.
-    *
-    */
+     * A commit-ish can be any of: sha-1 hash for a specific commit, branch name, tag name.
+     * If the commit-ish portion of the URL is blank or left of entirely, the default is master.
+     *
+     */
     _cloneRepository: function(repositoryUrl, cloneTargetDirectory) {
         if(this.disableSync === true) {
             clog('Skipping clone of repository: '+repositoryUrl+ ' to: '+cloneTargetDirectory);
@@ -117,21 +118,73 @@ module.exports = {
     },
     _updateLocalRepository: function(repositoryPath, commitIsh) {
         if(this.disableSync === true) {
-            clog('Skipping local repository update for commitIsh: '+commitIsh+ ' on: '+repositoryPath);
+            permaclog('Skipping local repository update for commitIsh: '+commitIsh+ ' on: '+repositoryPath);
             return true;
         }
         // If the hash, branch or tag is not present then it will return a fatal error and disconnect
         var cmds = [];
         cmds.push('rm -rf *'); // Removing all files works better than just a hard reset
         cmds.push('git reset --hard');
-        cmds.push('git fetch');
-        cmds.push('git checkout "' + commitIsh+'"');
-        cmds.push('git pull');
 
         try {
             var cwd = process.cwd();
             // Change directories to the target directory (which should be home to a git repository)
             process.chdir(repositoryPath);
+            // Run the commands
+            cmds.forEach(function(cmd, index) {
+                permaclog(cmd);
+                child_process.execSync(cmd);
+            });
+
+            var repoPathSha1 = sha1(repositoryPath);
+
+            if(!this._filePathsForRemoval.hasOwnProperty(repoPathSha1)) {
+                this._filePathsForRemoval[repoPathSha1] = {
+                    path: repositoryPath,
+                    list: []
+                };
+
+                var deletedFilesOutput = child_process.execSync('git diff HEAD ' + commitIsh + ' --name-only --diff-filter=D');
+                var deletedFiles = deletedFilesOutput.toString().split("\n");
+
+                // This command cannot be combined with the deleted files check because that would give us the NEW file name and not the OLD one that we need to remove.
+                var renamedFilesOutput = child_process.execSync('git diff ' + commitIsh + ' HEAD --name-only --diff-filter=R');
+                var renamedFiles = renamedFilesOutput.toString().split("\n");
+
+                var self = this;
+                deletedFiles.forEach(function(value, index) {
+                    if(!value) {
+                        return; // Skip the empty value that is usually found at the end of the list.
+                    }
+                    self._filePathsForRemoval[repoPathSha1].list.push(value);
+                });
+
+                renamedFiles.forEach(function(value, index) {
+                    if(!value) {
+                        return; // Skip the empty value that is usually found at the end of the list.
+                    }
+                    self._filePathsForRemoval[repoPathSha1].list.push(value);
+                });
+            }
+
+            // Change directories back to the original working directory
+            process.chdir(cwd);
+        } catch(e) {
+            permaclog('Error encountered when resetting repository to preferred state.');
+            this.exit(1);
+            return false;
+        }
+
+        // Reset command list
+        cmds = [];
+        cmds.push('git fetch');
+        cmds.push('git checkout "' + commitIsh+'"');
+        cmds.push('git pull');
+
+        try {
+            // Change directories to the target directory (which should be home to a git repository)
+            process.chdir(repositoryPath);
+
             // Run the commands
             cmds.forEach(function(cmd, index) {
                 permaclog(cmd);
@@ -308,8 +361,12 @@ module.exports = {
         }
 
         if(! lib.isObject(mumc.install.scripts)) {
-            permaclog('Invalid mum.json configuration : The install.scripts property must be an <object>{beforeInstall:<array><string>, beforeSync:<array><string> afterSync:<array><string>, afterInstall:<array><string>, cleanup:<array><string>}.');
-            this.exit(1);
+            if(!mumc.install.hasOwnProperty('scripts')) {
+                mumc.install.scripts = {};
+            } else {
+                permaclog('Invalid mum.json configuration : The install.scripts property must be an <object>{beforeInstall:<array><string>, beforeSync:<array><string> afterSync:<array><string>, afterInstall:<array><string>, cleanup:<array><string>}.');
+                this.exit(1);
+            }
         }
 
         if(typeof(mumc.install.scripts.beforeInstall) == 'undefined') {
@@ -721,7 +778,7 @@ module.exports = {
         var cwd = process.cwd();
         o.beforeInstall.forEach(function(value, index) {
             value.scripts.forEach(function(scriptFile, index) {
-                var scriptFile = self._resolve(value.directory, scriptFile);
+                scriptFile = self._resolve(value.directory, scriptFile);
                 permaclog('Setting permissions on and attempting to run: '+scriptFile);
                 var scriptDir = path.dirname(scriptFile);
                 permaclog('Switching directories to: '+scriptDir);
@@ -743,7 +800,7 @@ module.exports = {
 
         o.beforeSync.forEach(function(value, index) {
             value.scripts.forEach(function(scriptFile, index) {
-                var scriptFile = self._resolve(value.directory, scriptFile);
+                scriptFile = self._resolve(value.directory, scriptFile);
                 permaclog('Setting permissions on and attempting to run: '+scriptFile);
                 var scriptDir = path.dirname(scriptFile);
                 permaclog('Switching directories to: '+scriptDir);
@@ -768,6 +825,60 @@ module.exports = {
             // sync source to destination
             lib.overlayFilesRecursive(value.source, value.installTo, value.excludes, true);
         });
+
+        o.maps.sort(function(a, b) {
+            if(a.source > b.source) {
+                return 1;
+            } else if(a.source < b.source) {
+                return -1;
+            }
+            return 0;
+        });
+
+        o.maps.forEach(function(map, index) {
+            for(var repositoryDirSha1 in self._filePathsForRemoval) {
+                if(!self._filePathsForRemoval.hasOwnProperty(repositoryDirSha1)) {
+                    continue;
+                }
+
+                var removalSet = self._filePathsForRemoval[repositoryDirSha1];
+                if(map.source.length < removalSet.path.length || map.source.substr(0, removalSet.path.length) != removalSet.path) {
+                    //clog('continuing');
+                    continue; // The source path for this mapping does not apply to this removal set because the repository paths don't match up
+                }
+
+                var list = removalSet.list;
+                var basePath = map.source.substr(removalSet.path.length);
+                var pathSepRegex = /^[/\\]/;
+                basePath = basePath.replace(pathSepRegex, '');
+
+                list.forEach(function(removalTargetPath, index) {
+                    if(!removalTargetPath) {
+                        return;
+                    }
+
+                    if(removalTargetPath.substr(0, basePath.length) == basePath) {
+                        removalTargetPath = removalTargetPath.substr(basePath.length).replace(pathSepRegex, '');
+                        removalTargetPath = map.installTo + path.sep + removalTargetPath;
+
+                        if(!fs.existsSync(removalTargetPath)) {
+                            return;
+                        }
+
+                        try {
+                            permaclog('Deleting Removed File: ' + removalTargetPath);
+                            fs.unlinkSync(removalTargetPath);
+                        } catch (e) {
+                            permaclog(e.stdout);
+                            permaclog(e.message);
+                            permaclog('Failed to delete a file that was removed. This can cause significant issues in a deployment. Please manually delete this file and try again: ' + removalTargetPath);
+                            self.exit(1);
+                        }
+                    }
+                });
+            }
+        });
+
         var scriptSets = ['afterSync', 'afterInstall', 'cleanup'];
 
         for(var index in scriptSets) {
@@ -783,7 +894,7 @@ module.exports = {
             permaclog('Running script set: ' + scriptSetName + '.');
             scriptSet.forEach(function(value, index) {
                 value.scripts.forEach(function(scriptFile, index) {
-                    var scriptFile = self._resolve(value.directory, scriptFile);
+                    scriptFile = self._resolve(value.directory, scriptFile);
                     permaclog('Setting permissions on and attempting to run: ' + scriptFile);
                     var scriptDir = path.dirname(scriptFile);
                     permaclog('Switching directories to: ' + scriptDir);

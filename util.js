@@ -119,8 +119,7 @@ module.exports = {
 
         return true;
     },
-    _hasCheckedForDeletedFiles: false,
-    _filePathsForRemoval: [],
+    _filePathsForRemoval: {},
     _updateLocalRepository: function(repositoryPath, commitIsh) {
         clog('_updateLocalRepository()');
         if(this.disableSync === true) {
@@ -142,11 +141,35 @@ module.exports = {
                 child_process.execSync(cmd);
             });
 
-            if(!this._hasCheckedForDeletedFiles) {
-                clog('Checking for deleted files');
-                var deletedFilesOutput = child_process.execSync('git diff HEAD origin/' + commitIsh + ' --name-only --diff-filter=DR');
-                this._filePathsForRemoval = deletedFilesOutput.toString().split("\n");
-                this._hasCheckedForDeletedFiles = true;
+            var repoPathSha1 = sha1(repositoryPath);
+
+            if(!this._filePathsForRemoval.hasOwnProperty(repoPathSha1)) {
+                this._filePathsForRemoval[repoPathSha1] = {
+                    path: repositoryPath,
+                    list: []
+                };
+
+                var deletedFilesOutput = child_process.execSync('git diff HEAD ' + commitIsh + ' --name-only --diff-filter=D');
+                var deletedFiles = deletedFilesOutput.toString().split("\n");
+
+                // This command cannot be combined with the deleted files check because that would give us the NEW file name and not the OLD one that we need to remove.
+                var renamedFilesOutput = child_process.execSync('git diff ' + commitIsh + ' HEAD --name-only --diff-filter=R');
+                var renamedFiles = renamedFilesOutput.toString().split("\n");
+
+                var self = this;
+                deletedFiles.forEach(function(value, index) {
+                    if(!value) {
+                        return; // Skip the empty value that is usually found at the end of the list.
+                    }
+                    self._filePathsForRemoval[repoPathSha1].list.push(value);
+                });
+
+                renamedFiles.forEach(function(value, index) {
+                    if(!value) {
+                        return; // Skip the empty value that is usually found at the end of the list.
+                    }
+                    self._filePathsForRemoval[repoPathSha1].list.push(value);
+                });
             }
 
             // Change directories back to the original working directory
@@ -399,8 +422,12 @@ module.exports = {
         }
 
         if(! lib.isObject(mumc.install.scripts)) {
-            permaclog('Invalid mum.json configuration : The install.scripts property must be an <object>{beforeInstall:<array><string>, beforeSync:<array><string> afterSync:<array><string>, afterInstall:<array><string>, cleanup:<array><string>}.');
-            this.exit(1);
+            if(!mumc.install.hasOwnProperty('scripts')) {
+                mumc.install.scripts = {};
+            } else {
+                permaclog('Invalid mum.json configuration : The install.scripts property must be an <object>{beforeInstall:<array><string>, beforeSync:<array><string> afterSync:<array><string>, afterInstall:<array><string>, cleanup:<array><string>}.');
+                this.exit(1);
+            }
         }
 
         if(typeof(mumc.install.scripts.beforeInstall) == 'undefined') {
@@ -555,7 +582,7 @@ module.exports = {
         }
 
         if(baseLevel) {
-            this._runSyncProcess(o);
+            this._runSyncProcess(o, sourceDirectory, installationDirectory);
 
             if(callback instanceof Function) {
                 callback();
@@ -813,41 +840,7 @@ module.exports = {
                 break;
         }
     },
-    /**
-     * Deletes files from dir if basePath matches base of file path.
-     *
-     * @param dir
-     * @param files
-     * @param basePath
-     * @private
-     */
-    _deleteRelativeFiles: function(dir, files, basePath) {
-        try {
-            for(var i = 0; i < files.length; i++) {
-                if(!files.hasOwnProperty(i)) {
-                    continue;
-                }
-
-                var filePath = files[i];
-                if(!filePath) {
-                    continue;
-                }
-                if(basePath.length < 1 || filePath.substr(0, basePath.length) == basePath) {
-                    var fullPath = dir + '/' + filePath;
-                    clog('Trying to find and delete: ', fullPath);
-                    if(!fs.existsSync(fullPath)) {
-                        continue;
-                    }
-                    fs.unlinkSync(fullPath);
-                }
-            }
-        } catch(e) {
-            permaclog('Unable to delete a file that was removed in the repository: '+fullPath);
-            this.exit(1);
-        }
-    },
-    _runSyncProcess: function(o) {
-        clog('_runSyncProcess');
+    _runSyncProcess: function(o, sourceDirectory, installationDirectory) {
         var self = this;
 
         process.env.MUM_CACHE_DIR = this._getMumCacheDirectory();
@@ -898,20 +891,66 @@ module.exports = {
         });
         process.chdir(cwd);
 
-        // todo - loop all file paths in this._filePathsForRemoval and delete them from the source
-        clog('Deleting unmapped files', this._baseLevelInstallationDirectory, this._filePathsForRemoval);
-        this._deleteRelativeFiles(this._baseLevelInstallationDirectory, this._filePathsForRemoval, '');
-
         o.maps.forEach(function(value, index) {
             value = self._legacySupport_convert_installTo_into_target(value);
-
-            /*// todo - loop all file paths in this._filePathsForRemoval and delete them from the target MAPPED destination.
-            clog('Deleting mapped files: ', value.target, self._filePathsForRemoval, value.source);
-            self._deleteRelativeFiles(value.target, self._filePathsForRemoval);*/
 
             // sync source to destination
             lib.overlayFilesRecursive(value.source, value.target, value.excludes, true);
         });
+
+        o.maps.sort(function(a, b) {
+            if(a.source > b.source) {
+                return 1;
+            } else if(a.source < b.source) {
+                return -1;
+            }
+            return 0;
+        });
+
+        o.maps.forEach(function(map, index) {
+            for(var repositoryDirSha1 in self._filePathsForRemoval) {
+                if(!self._filePathsForRemoval.hasOwnProperty(repositoryDirSha1)) {
+                    continue;
+                }
+
+                var removalSet = self._filePathsForRemoval[repositoryDirSha1];
+                if(map.source.length < removalSet.path.length || map.source.substr(0, removalSet.path.length) != removalSet.path) {
+                    //clog('continuing');
+                    continue; // The source path for this mapping does not apply to this removal set because the repository paths don't match up
+                }
+
+                var list = removalSet.list;
+                var basePath = map.source.substr(removalSet.path.length);
+                var pathSepRegex = /^[/\\]/;
+                basePath = basePath.replace(pathSepRegex, '');
+
+                list.forEach(function(removalTargetPath, index) {
+                    if(!removalTargetPath) {
+                        return;
+                    }
+
+                    if(removalTargetPath.substr(0, basePath.length) == basePath) {
+                        removalTargetPath = removalTargetPath.substr(basePath.length).replace(pathSepRegex, '');
+                        removalTargetPath = map.target + path.sep + removalTargetPath;
+
+                        if(!fs.existsSync(removalTargetPath)) {
+                            return;
+                        }
+
+                        try {
+                            permaclog('Deleting Removed File: ' + removalTargetPath);
+                            fs.unlinkSync(removalTargetPath);
+                        } catch (e) {
+                            permaclog(e.stdout);
+                            permaclog(e.message);
+                            permaclog('Failed to delete a file that was removed. This can cause significant issues in a deployment. Please manually delete this file and try again: ' + removalTargetPath);
+                            self.exit(1);
+                        }
+                    }
+                });
+            }
+        });
+
         var scriptSets = ['afterSync', 'afterInstall', 'cleanup'];
 
         for(var index in scriptSets) {

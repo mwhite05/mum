@@ -1,4 +1,11 @@
 #! /bin/bash
 
-#node ../mum.js install git@github.com:mwhite05/mum-example.git#advanced ./www/html
-node ../mum.js install git@github.com:mwhite05/mum-example.git#removed-files ./www/html
+rm -rf ./www/.mum/*
+rm -rf ./www/html/*
+rm ./www/mumi.json
+
+# Deploy a version of the repository and its dependency that contain files to be removed.
+node ../mum.js install git@github.com:mwhite05/mum-example.git#34a9018e38a41173108a425f8d2770816af04abe ./www/html
+
+# Now deploy a version of the repository and its dependency that attempt to remove files previously deployed.
+node ../mum.js install git@github.com:mwhite05/mum-example.git#728b07f8415b2cb38bbd50354fe21aef6e63ce18 ./www/html

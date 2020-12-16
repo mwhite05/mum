@@ -4,10 +4,16 @@ const mkdirp = require('mkdirp');
 //const handlebars = require('handlebars');
 const path = require('path');
 const child_process = require('child_process');
-const util = require('util.js');
+const util = require('./util.js');
 
 module.exports = {
     disableSync: false,
+
+    test: function() {
+        this.clog('Testing util.exit(1);');
+        util.exit(1);
+    },
+
     error: function(errorMessage, errorCode) {
         this.clog('Error['+errorCode+']: '+errorMessage);
         util.exit(errorCode);
@@ -180,15 +186,7 @@ module.exports = {
         process.stdout.write("\u001b[2J\u001b[0;0H");
     },
 
-    clog: function () {
-        var args = Array.prototype.slice.call(arguments);
-        args.forEach(function (value, index) {
-            if(value instanceof Buffer) {
-                value = value.toString();
-            }
-            console.log(value);
-        });
-    },
+    clog: util.clog,
 
     isDirectoryEmpty: function(directory) {
         return (fs.readdirSync(directory).length == 0);

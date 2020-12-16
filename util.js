@@ -13,9 +13,17 @@ const extend = require('extend');
 const child_process = require('child_process');
 const readlineSync = require('readline-sync');
 //const cla = require('command-line-args');
-const clog = lib.clog;
+const clog = function () {
+        var args = Array.prototype.slice.call(arguments);
+        args.forEach(function (value, index) {
+            if(value instanceof Buffer) {
+                value = value.toString();
+            }
+            console.log(value);
+        });
+    };
 //noinspection SpellCheckingInspection
-const permaclog = lib.clog;
+const permaclog = clog;
 
 /* RULES:
         * Any variable named *Directory is a path to a directory.
@@ -1022,6 +1030,7 @@ module.exports = {
         }
         process.exit(errorCode);
     },
+    clog: clog,
     notifySuccess: function() {
         permaclog('SUCCESS!');
         this.ding(1);

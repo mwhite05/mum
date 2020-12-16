@@ -187,7 +187,8 @@ switch (mainOptions.command) {
         util.update(updateOptions.clean);
         break;
     case 'debug':
-        util.runDebugOperations();
+        lib.test();
+        //util.runDebugOperations();
         break;
     case 'help':
     default:

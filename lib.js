@@ -18,6 +18,39 @@ module.exports = {
         this.exit(errorCode);
     },
 
+    wait: function(milliseconds) {
+        var targetTime = new Date(new Date().getTime() + milliseconds);
+        while(targetTime > new Date()){
+            // Do nothing, just keep looping until the specified time has elapsed.
+        }
+    },
+    ding: function(numberOfTimes) {
+        if(!this._bellEnabled) {
+            return;
+        }
+        if(numberOfTimes === undefined) {
+            numberOfTimes = 1;
+        }
+        while(numberOfTimes > 0) {
+            child_process.execSync('tput bel', {stdio: 'inherit'});
+            this.wait(50);
+            numberOfTimes--;
+        }
+    },
+    exit: function(errorCode) {
+        if(!errorCode) {
+
+        } else {
+            this.clog('ERROR; CODE: '+errorCode);
+            this.ding();
+            this.wait(500);
+            this.ding();
+            this.wait(500);
+            this.ding();
+        }
+        process.exit(errorCode);
+    },
+
     _mapArgsToObject: function(args, argsMap, command) {
         if(argsMap.length < 1) {
             return args;

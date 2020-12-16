@@ -4,19 +4,18 @@ const mkdirp = require('mkdirp');
 //const handlebars = require('handlebars');
 const path = require('path');
 const child_process = require('child_process');
-const util = require('./util.js');
 
 module.exports = {
     disableSync: false,
 
     test: function() {
-        this.clog('Testing util.exit(1);');
-        util.exit(1);
+        this.clog('Testing lib.exit(1);');
+        this.exit(1);
     },
 
     error: function(errorMessage, errorCode) {
         this.clog('Error['+errorCode+']: '+errorMessage);
-        util.exit(errorCode);
+        this.exit(errorCode);
     },
 
     _mapArgsToObject: function(args, argsMap, command) {
@@ -186,7 +185,15 @@ module.exports = {
         process.stdout.write("\u001b[2J\u001b[0;0H");
     },
 
-    clog: util.clog,
+    clog: function () {
+        var args = Array.prototype.slice.call(arguments);
+        args.forEach(function (value, index) {
+            if(value instanceof Buffer) {
+                value = value.toString();
+            }
+            console.log(value);
+        });
+    },
 
     isDirectoryEmpty: function(directory) {
         return (fs.readdirSync(directory).length == 0);
@@ -327,12 +334,12 @@ module.exports = {
 
         if(!fs.existsSync(sourcePath)) {
             self.clog('Could not find the source directory for overlay operation: '+sourcePath);
-            util.exit(1);
+            this.exit(1);
         }
 
         if(! fs.existsSync(targetPath) && ! mkdirp.sync(targetPath)) {
             self.clog('Could not find or create the destination directory for overlay operation: '+targetPath);
-            util.exit(1);
+            this.exit(1);
         }
 
         self.clog('Overlaying: ' + sourcePath + ' onto: ' + targetPath);
@@ -365,7 +372,7 @@ module.exports = {
         try {
             child_process.execSync($command);
         } catch(e) {
-            util.exit(1);
+            this.exit(1);
         }
 
         self.clog('Done overlaying files.');

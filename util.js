@@ -14,14 +14,14 @@ const child_process = require('child_process');
 const readlineSync = require('readline-sync');
 //const cla = require('command-line-args');
 const clog = function () {
-        var args = Array.prototype.slice.call(arguments);
-        args.forEach(function (value, index) {
-            if(value instanceof Buffer) {
-                value = value.toString();
-            }
-            console.log(value);
-        });
-    };
+    var args = Array.prototype.slice.call(arguments);
+    args.forEach(function (value, index) {
+        if(value instanceof Buffer) {
+            value = value.toString();
+        }
+        console.log(value);
+    });
+};
 //noinspection SpellCheckingInspection
 const permaclog = clog;
 

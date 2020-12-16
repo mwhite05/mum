@@ -403,8 +403,11 @@ module.exports = {
         }
         var $command = 'rsync -vr' + ignoreExisting + excludeFlags + '"' + sourcePath + '/" "' + targetPath + '"';
         try {
-            child_process.execSync($command);
+            child_process.execSync($command, {stdio: 'ignore'});
         } catch(e) {
+            self.clog('Failed to run command: ');
+            self.clog($command);
+            self.clog(e);
             self.exit(1);
         }
 

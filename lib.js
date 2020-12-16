@@ -4,7 +4,7 @@ const mkdirp = require('mkdirp');
 //const handlebars = require('handlebars');
 const path = require('path');
 const child_process = require('child_process');
-const util = require('util');
+const util = require('util.js');
 
 module.exports = {
     disableSync: false,

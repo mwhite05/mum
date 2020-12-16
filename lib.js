@@ -334,12 +334,12 @@ module.exports = {
 
         if(!fs.existsSync(sourcePath)) {
             self.clog('Could not find the source directory for overlay operation: '+sourcePath);
-            this.exit(1);
+            self.exit(1);
         }
 
         if(! fs.existsSync(targetPath) && ! mkdirp.sync(targetPath)) {
             self.clog('Could not find or create the destination directory for overlay operation: '+targetPath);
-            this.exit(1);
+            self.exit(1);
         }
 
         self.clog('Overlaying: ' + sourcePath + ' onto: ' + targetPath);
@@ -372,7 +372,7 @@ module.exports = {
         try {
             child_process.execSync($command);
         } catch(e) {
-            this.exit(1);
+            self.exit(1);
         }
 
         self.clog('Done overlaying files.');

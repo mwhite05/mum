@@ -138,6 +138,7 @@ module.exports = {
         var cmds = [];
         cmds.push('rm -rf *'); // Removing all files works better than just a hard reset
         cmds.push('git reset --hard');
+        cmds.push('git fetch'); // Ensure we have the latest branches and tags locally
 
         try {
             var cwd = process.cwd();
@@ -190,7 +191,6 @@ module.exports = {
 
         // Reset command list
         cmds = [];
-        cmds.push('git fetch');
         cmds.push('git checkout "' + commitIsh+'"');
         cmds.push('git pull');
 

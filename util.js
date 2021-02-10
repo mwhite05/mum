@@ -129,7 +129,7 @@ module.exports = {
     },
     _filePathsForRemoval: {},
     _updateLocalRepository: function(repositoryPath, commitIsh) {
-        clog('_updateLocalRepository()');
+        permaclog('_updateLocalRepository('+repositoryPath+', '+commitIsh+')');
         if(this.disableSync === true) {
             permaclog('Skipping local repository update for commitIsh: '+commitIsh+ ' on: '+repositoryPath);
             return true;
@@ -145,10 +145,13 @@ module.exports = {
             // Change directories to the target directory (which should be home to a git repository)
             process.chdir(repositoryPath);
             // Run the commands
+            let totalCommands = cmds.length;
             cmds.forEach(function(cmd, index) {
-                permaclog(cmd);
+                permaclog('Command '+(index+1)+' of '+totalCommands+': '+cmd);
                 child_process.execSync(cmd);
             });
+
+            permaclog('Repository preparation commands completed.');
 
             var repoPathSha1 = sha1(repositoryPath);
 
@@ -157,6 +160,21 @@ module.exports = {
                     path: repositoryPath,
                     list: []
                 };
+
+                // Get the current commit hash so we can get back to it in a moment
+                let currentCommitSha1 = (child_process.execSync('git rev-parse HEAD')+'').trim();
+
+                clog('Will diff '+currentCommitSha1+' against '+commitIsh);
+
+                // Checkout the target branch so we have it locally to diff against
+                clog('Checking out: '+commitIsh);
+                child_process.execSync('git checkout "'+commitIsh+'"');
+
+                // Switch back to the current commit hash for running the diff
+                clog('Checking out: '+currentCommitSha1);
+                child_process.execSync('git checkout "'+currentCommitSha1+'"');
+
+                clog('Trying to diff: '+currentCommitSha1+' against '+commitIsh);
 
                 var deletedFilesOutput = child_process.execSync('git diff HEAD ' + commitIsh + ' --name-only --diff-filter=D');
                 var deletedFiles = deletedFilesOutput.toString().split("\n");
@@ -185,6 +203,7 @@ module.exports = {
             process.chdir(cwd);
         } catch(e) {
             permaclog('Error encountered when resetting repository to preferred state.');
+            permaclog(e.message);
             this.exit(1);
             return false;
         }

@@ -325,12 +325,18 @@ module.exports = {
             return extend({}, this._defaultMumConfig);
         }
 
-        var mumc = JSON.parse(fs.readFileSync(file));
+        let mumc = JSON.parse(fs.readFileSync(file));
         if(! lib.isObject(mumc)) {
             return extend({}, this._defaultMumConfig);
         }
 
         mumc = extend({}, this._defaultMumConfig, mumc);
+
+        // Apply overrides from the master mumi.json file based on the target's name.
+        const targetName = mumc.name;
+        if(this._mumi.hasOwnProperty('overrides') && this._mumi.overrides.hasOwnProperty(targetName)) {
+            mumc = extend(mumc, this._mumi.overrides[targetName]);
+        }
 
         return mumc;
     },

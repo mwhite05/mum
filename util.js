@@ -822,10 +822,12 @@ module.exports = {
             this._baseLevelInstallationDirectory = target; //target.replace(/\/+$/);
 
             // Write the mumi.json file
-            var mumi = {
+            let mumi = this.getMumiData();
+
+            mumi = extend({
                 source: source,
                 target: target
-            };
+            }, mumi);
 
             if(!fs.existsSync(this._baseLevelInstallationDirectory)) {
                 mkdirp.sync(this._baseLevelInstallationDirectory);

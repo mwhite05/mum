@@ -340,11 +340,15 @@ module.exports = {
 
         return mumc;
     },
-    getMumiData: function() {
+    getMumiData: function(ignoreMissingMumiConfigFile) {
         if(this._mumi) {
             return this._mumi;
         }
         if(!fs.existsSync('./mumi.json')) {
+            if(ignoreMissingMumiConfigFile) {
+                this._mumi = {};
+                return this._mumi;
+            }
             permaclog('Unable to update. Could not find instructions file: '+process.cwd()+'/mumi.json');
             this.exit(1);
         }
@@ -822,7 +826,7 @@ module.exports = {
             this._baseLevelInstallationDirectory = target; //target.replace(/\/+$/);
 
             // Write the mumi.json file
-            let mumi = this.getMumiData();
+            let mumi = this.getMumiData(true);
 
             mumi = extend({
                 source: source,

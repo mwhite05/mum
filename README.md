@@ -194,6 +194,8 @@ Need to feel confident that the code is deployed in full with no extraneous file
 
 Is it time to update to a new branch/tag/hash? Well you could manually modify the `mumi.json` file but as of 0.2.7-alpha you can run `mum update <commitish>`. Alternately run `mum update "#<commitish>"`.
 
+You can modify the `mumi.json` file with an "overrides" object as well. This overrides object allows you to apply custom modifications to a dependency's definition without having to directly commit a change to the repository's `mum.json` file. See the *Overrides Example* at the bottom of this page for details on how to set this up.
+
 If you need to run a clean update and provide a new commit-ish then run: `mum update <commitish> -c` or `mum update "#<commitish>" -c`
 
 If you want to debug your installer scripts and processes, `mum update -S` is a handy command that skips all file copy, checkout, and clone operations that otherwise would have taken place. This allows you to modify your scripts without committing them for the purpose of testing and debugging.
@@ -219,7 +221,7 @@ You can add one or more dependencies to your project using the `dependencies` ar
     "dependencies": [
         {
             "source": "git@github.com:WordPress/WordPress.git#4.6",
-            "target": "./"
+            "installTo": "./"
         }
     ]
 }
@@ -239,11 +241,11 @@ You can have multiple dependencies:
         {
             "name": "wordpress",
             "source": "git@github.com:WordPress/WordPress.git#4.6",
-            "target": "./"
+            "installTo": "./"
         },
         {
             "source": "git@github.com:mwhite05/mum-example.git#basic",
-            "target": "./examples"
+            "installTo": "./examples"
         }
     ]
 }
@@ -263,11 +265,11 @@ If we named the repository in the above configuration example it might look like
     "dependencies": [
         {
             "source": "git@github.com:WordPress/WordPress.git#4.6",
-            "target": "./"
+            "installTo": "./"
         },
         {
             "source": "git@github.com:mwhite05/mum-example.git#basic",
-            "target": "./examples"
+            "installTo": "./examples"
         }
     ]
 }
@@ -346,7 +348,7 @@ It then tells mum to also copy everything from the `./apache` directory to the `
         "map": [
             {
                 "source": "./",
-                "target": "./",
+                "installTo": "./",
                 "excludes": [
                     "mum-scripts",
                     "apache"
@@ -366,8 +368,47 @@ It then tells mum to also copy everything from the `./apache` directory to the `
     "dependencies": [
         {
             "source": "git@github.com:WordPress/WordPress.git#4.6",
-            "target": "./"
+            "installTo": "./"
         }
     ]
 }
 ```
+
+# Overrides Example
+
+Below is an example of how to modify define `"overrides"` in `mumi.json`.
+
+Assuming you have a project `mum.json` like this:
+
+```
+{
+    "name": "my-project",
+    "dependencies": [
+        {
+            "source": "git@some-repository-host.com:MyFramework.git#2.3",
+            "installTo": "./"
+        }
+    ]
+}
+```
+
+You can then override the dependencies like this in the `mumi.json` file:
+
+```
+{
+    "source": "git@some-repository-host.com:MyProject.git#feature/quick-cart",
+    "target": "/home/my-project/public_html",
+    "overrides": {
+        "my-project": {
+            "dependencies": [
+                {
+                    "source": "git@some-repository-host.com:MyFramework.git#2.4",
+                    "installTo": "./"
+                }
+            ]
+        }
+    }
+}
+```
+
+Note the version specified on the MyFramework dependency has been set to 2.4 in the overrides instead of 2.3 as defined in the project `mum.json` file.

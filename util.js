@@ -136,6 +136,9 @@ module.exports = {
         }
         // If the hash, branch or tag is not present then it will return a fatal error and disconnect
         var cmds = [];
+
+        // 2022-04-13 : Added chown root command to solve an issue caused when git patched a security issue on 2022-04-12 that requires the user running git commands to be the same as the owner of the repository directory. https://lore.kernel.org/git/xmqqv8veb5i6.fsf@gitster.g/ | https://github.blog/2022-04-12-git-security-vulnerability-announced/
+        cmds.push(`chown root "${repositoryPath}"`);
         cmds.push('rm -rf *'); // Removing all files works better than just a hard reset
         cmds.push('git reset --hard');
         cmds.push('git remote update'); // No really, ensure we have the latest branches and tags locally

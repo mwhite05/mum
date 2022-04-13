@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/local/bin/php
 <?php
 
 echo "Packing...".PHP_EOL;

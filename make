@@ -1,4 +1,4 @@
-#!/usr/local/bin/php
+#!/opt/homebrew/bin/php
 <?php
 
 echo "Packing...".PHP_EOL;
@@ -15,13 +15,22 @@ $command = 'npm pack';
 exec($command.' 2>&1', $output, $exitCode);
 
 rsort($output);
+$packageFileName = null;
 foreach($output as $line) {
     if(strpos($line, '.tgz') !== false) {
         $packageFileName = trim($line);
     }
 }
 
+if(!$packageFileName) {
+    echo 'Unable to complete build. The package file (.tgz) could not be found.';
+    exit;
+}
+
 // Move the package file to the published/ directory (from which we upload to the web server)
+if(!is_dir('published')) {
+    mkdir('published', 0755);
+}
 exec('mv "'.$packageFileName.'" published/', $output, $exitCode);
 $cmd = 'cp "published/'.$packageFileName.'" "published/mum.tgz"';
 exec($cmd);

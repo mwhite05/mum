@@ -933,13 +933,7 @@ module.exports = {
         });
         process.chdir(cwd);
 
-        o.maps.forEach(function(value, index) {
-            value = self._legacySupport_convert_installTo_into_target(value);
-
-            // sync source to destination
-            lib.overlayFilesRecursive(value.source, value.target, value.excludes, true);
-        });
-
+        // Operate on the files in the most sensible order
         o.maps.sort(function(a, b) {
             if(a.source > b.source) {
                 return 1;
@@ -949,6 +943,7 @@ module.exports = {
             return 0;
         });
 
+        // Handle removal of files deleted between commits (if any)
         o.maps.forEach(function(map, index) {
             for(var repositoryDirSha1 in self._filePathsForRemoval) {
                 if(!self._filePathsForRemoval.hasOwnProperty(repositoryDirSha1)) {
@@ -991,6 +986,14 @@ module.exports = {
                     }
                 });
             }
+        });
+
+        // Sync the files from the source(s) to the target(s)
+        o.maps.forEach(function(value, index) {
+            value = self._legacySupport_convert_installTo_into_target(value);
+
+            // sync source to destination
+            lib.overlayFilesRecursive(value.source, value.target, value.excludes, true);
         });
 
         var scriptSets = ['afterSync', 'afterInstall', 'cleanup'];

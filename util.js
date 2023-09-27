@@ -933,6 +933,8 @@ module.exports = {
         });
         process.chdir(cwd);
 
+        const mapsPreSort = [...o.maps];
+
         // Operate on the files in the most sensible order
         o.maps.sort(function(a, b) {
             if(a.source > b.source) {
@@ -989,7 +991,7 @@ module.exports = {
         });
 
         // Sync the files from the source(s) to the target(s)
-        o.maps.forEach(function(value, index) {
+        mapsPreSort.forEach(function(value, index) {
             value = self._legacySupport_convert_installTo_into_target(value);
 
             // sync source to destination

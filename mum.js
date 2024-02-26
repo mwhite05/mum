@@ -77,7 +77,7 @@ const mainOptions = commandLineArgs([
 
 // Check if they are asking for version info. If so, only give them that.
 if(mainOptions.version === true) {
-    permaclog("mum "+props.packageConfig.version+"\n\nCopyright (c) 2016-2019 Michael White");
+    permaclog("mum "+props.packageConfig.version+"\n\nCopyright (c) 2016-2024 Michael White");
     util.exit(0);
 }
 

@@ -234,9 +234,8 @@ module.exports = {
         return true;
     },
     _getCommitIsh: function(repositoryUrl) {
-        var parts = URL.parse(repositoryUrl);
-        var commitIsh = parts.hash.replace('#', ''); // get the commit-ish (npm term) from the end of the url
-        return commitIsh ? commitIsh : 'master';
+        const parts = this.parseRepositoryUrl(repositoryUrl);
+        return parts.commitIsh ? parts.commitIsh : 'master';
     },
     confirmInstallation: function() {
         this._installationConfirmed = true;
@@ -328,7 +327,8 @@ module.exports = {
             return extend({}, this._defaultMumConfig);
         }
 
-        let mumc = JSON.parse(fs.readFileSync(file));
+        const fileContents = fs.readFileSync(file);
+        let mumc = JSON.parse(fileContents);
         if(! lib.isObject(mumc)) {
             return extend({}, this._defaultMumConfig);
         }
@@ -383,8 +383,8 @@ module.exports = {
 
         // Modify the hash on the repository URL if the source is a repository URL
         if(sourceType === 'repository') {
-            var repositoryUrlParts = URL.parse(mumi.source);
-            mumi.source = repositoryUrlParts.path + newVersion;
+            const parsedUrl = this.parseRepositoryUrl(mumi.source);
+            mumi.source = parsedUrl.url + newVersion;
             fs.writeFileSync('./mumi.json', JSON.stringify(mumi, null, "\t"));
         } else {
             permaclog('Unable to switch commit-ish. mumi.json source is not a repository URL.');
@@ -723,6 +723,23 @@ module.exports = {
         //
         // fs.createReadStream(archiveFile).on('error', handleExtractionError).pipe(extractor);
     },
+    parseRepositoryUrl: function(repositoryUrl) {
+        var repositoryUrlParts = URL.parse(repositoryUrl);
+
+        var commitIsh = repositoryUrlParts.hash.replace('#', ''); // get the commit-ish (npm term) from the end of the url
+
+        if(repositoryUrlParts.protocol === null) {
+            repositoryUrl = repositoryUrlParts.path;
+        } else {
+            repositoryUrl = `${repositoryUrlParts.protocol}//${repositoryUrlParts.host}${repositoryUrlParts.path}`;
+        }
+
+        return {
+            url: repositoryUrl,
+            commitIsh: commitIsh ? commitIsh : null,
+            urlParts: repositoryUrlParts,
+        };
+    },
     installFromRepository: function(repositoryUrl, installationDirectory, clean, o, callback) {
         // todo Handles version scenarios like >, <, >=, <=, =
         // todo Syntax is part of commit-ish like: #>=2.0.0
@@ -731,10 +748,9 @@ module.exports = {
         var meta = {};
 
         // Separate the commit-ish from the repository URL
-        var repositoryUrlParts = URL.parse(repositoryUrl);
-
-        var commitIsh = repositoryUrlParts.hash.replace('#', ''); // get the commit-ish (npm term) from the end of the url
-        repositoryUrl = repositoryUrlParts.path;
+        const parsedUrl = this.parseRepositoryUrl(repositoryUrl);
+        const commitIsh = parsedUrl.commitIsh;
+        repositoryUrl = parsedUrl.url;
 
         var hashedUrl = sha1(repositoryUrl);
         var cacheDirectory = this._getMumCacheDirectory(installationDirectory)+'/'+hashedUrl;
